@@ -14,6 +14,9 @@ npm install --save-dev mocha
 npm install --save-dev dotenv
 npm install --save-dev hardhat-preprocessor
 npm install --save-dev solidity-coverage
+npm install --save-dev @uniswap/v2-core
+npm install --save-dev @uniswap/v2-periphery
+npm install --save-dev @openzeppelin/contracts
 ```
 ### 4.Compile
 `npx hardhat compile`
