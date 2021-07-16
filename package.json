@@ -1,0 +1,35 @@
+{
+  "name": "deepgo-nudgepool",
+  "version": "1.0.0",
+  "description": "DeepGo NudgePool smart contracts",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat test --network rinkeby"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DeepGoLab/DeepGo-NudgePool.git"
+  },
+  "author": "DeepGo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DeepGoLab/DeepGo-NudgePool/issues"
+  },
+  "homepage": "https://github.com/DeepGoLab/DeepGo-NudgePool#readme",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@types/chai": "^4.2.21",
+    "@types/mocha": "^8.2.3",
+    "@types/node": "^16.3.2",
+    "chai": "^4.3.4",
+    "dotenv": "^10.0.0",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.4.1",
+    "hardhat": "^2.4.3",
+    "mocha": "^9.0.2",
+    "solidity-coverage": "^0.7.16",
+    "ts-node": "^10.1.0",
+    "typescript": "^4.3.5"
+  }
+}

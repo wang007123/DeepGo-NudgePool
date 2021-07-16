@@ -1,5 +1,6 @@
-# gcc coverage testing tool files
-
-*.gcno
-*.gcda
-*.gcov
+#Hardhat files
+artifacts
+cache
+node_modules
+package-lock.json
+.env

@@ -1,2 +1,23 @@
 # DeepGo-NudgePool
 DeepGo NudgePool smart contracts
+
+## Development
+### 1.Install hardhat
+`npm install --save-dev hardhat`
+### 2.Install hardhat-waffle and hardhat-ethers
+`npm install --save-dev @nomiclabs/hardhat-waffle ethereum-waffle chai @nomiclabs/hardhat-ethers ethers`
+### 3.Install dependency
+```
+npm install --save-dev ts-node typescript
+npm install --save-dev chai @types/node @types/mocha @types/chai
+npm install --save-dev mocha
+npm install --save-dev dotenv
+npm install --save-dev hardhat-preprocessor
+npm install --save-dev solidity-coverage
+```
+### 4.Compile
+`npx hardhat compile`
+### 5.Deploy
+`npx hardhat run scripts/sample-scripts.js`
+### 6.Test
+`npx hardhat test --network rinkeby`
