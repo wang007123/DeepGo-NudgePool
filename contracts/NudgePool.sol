@@ -13,12 +13,9 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
     using SafeMath for uint256;
 
     bool public initialized;
-
     constructor(
         address _DGTToken,
         address _DGTBeneficiary,
-        address _factory,
-        address _router,
         address _ips,
         address _gps,
         address _lps,
@@ -27,9 +24,6 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
     {
         DGTToken = _DGTToken;
         DGTBeneficiary = _DGTBeneficiary;
-
-        factory = _factory;
-        router = _router;
 
         minRatio = uint32(RATIO_FACTOR * 5 / 1000000);
         alpha = 0;
@@ -60,6 +54,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         upgrade("0.0.1", _ipc, _gpdc, _gpwc, _lpc, _vtc, _stc, _lqdc);
         initialized = true;
     }
+
 
     function createPool(
         address _ip,

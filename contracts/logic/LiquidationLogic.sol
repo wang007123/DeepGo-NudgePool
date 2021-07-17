@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/SafeMath.sol";
-import "../lib/NPUniswap.sol";
+import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract LiquidationLogic is BaseLogic {
@@ -20,7 +20,7 @@ contract LiquidationLogic is BaseLogic {
         returns (bool)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
-        uint256 price = NPUniswap.getAmountOut(factory, router, _ipToken, _baseToken, 1 ether);
+        uint256 price = NPSwap.getAmountOut(_ipToken, _baseToken, 1 ether);
         uint256 IPAmount = _IPS.getIPTokensAmount(_ipToken, _baseToken);
         uint32 closeLine = _IPS.getIPCloseLine(_ipToken, _baseToken);
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
@@ -42,7 +42,7 @@ contract LiquidationLogic is BaseLogic {
         returns (bool)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
-        uint256 price = NPUniswap.getAmountOut(factory, router, _ipToken, _baseToken, 1 ether);
+        uint256 price = NPSwap.getAmountOut(_ipToken, _baseToken, 1 ether);
         uint256 IPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
         uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
 
@@ -93,7 +93,7 @@ contract LiquidationLogic is BaseLogic {
         swappedIP = raiseLP.div(price).mul(1 ether);
         swappedIP = swappedIP > IPAmount ? IPAmount : swappedIP;
         if (swappedIP > 0) {
-            belongLP = NPUniswap.swap(factory, router, _ipToken, _baseToken, swappedIP);
+            belongLP = NPSwap.swap(_ipToken, _baseToken, swappedIP);
         }
 
         belongGP = IPAmount.sub(swappedIP);
@@ -117,7 +117,7 @@ contract LiquidationLogic is BaseLogic {
         uint256 belongLP = 0;
 
         if (IPAmount > 0) {
-            belongLP= NPUniswap.swap(factory, router, _ipToken, _baseToken, IPAmount);
+            belongLP= NPSwap.swap(_ipToken, _baseToken, IPAmount);
         }
 
         belongLP = belongLP.add(LPBase.sub(raiseLP));
@@ -141,7 +141,7 @@ contract LiquidationLogic is BaseLogic {
         uint256 belongGP = 0;
 
         if (IPAmount > 0 ) {
-            swappedBase = NPUniswap.swap(factory, router, _ipToken, _baseToken, IPAmount);
+            swappedBase = NPSwap.swap(_ipToken, _baseToken, IPAmount);
         }
 
         belongLP = swappedBase > raiseLP ? raiseLP : swappedBase;

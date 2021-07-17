@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/SafeMath.sol";
-import "../lib/NPUniswap.sol";
+import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract StateLogic is BaseLogic {
@@ -73,7 +73,7 @@ contract StateLogic is BaseLogic {
     )
         private
     {
-        uint256 price = NPUniswap.getAmountOut(factory, router, _baseToken, _ipToken, 1 ether);
+        uint256 price = NPSwap.getAmountOut(_baseToken, _ipToken, 1 ether);
         uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
         uint256 initAmount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(1 ether).div(price);
@@ -90,7 +90,7 @@ contract StateLogic is BaseLogic {
         private
         returns (uint256 maxAmount)
     {
-        uint256 price = NPUniswap.getAmountOut(factory, router, _baseToken, _ipToken, 1 ether);
+        uint256 price = NPSwap.getAmountOut(_baseToken, _ipToken, 1 ether);
         uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
         uint256 initPrice = _IPS.getPoolInitPrice(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
@@ -122,7 +122,7 @@ contract StateLogic is BaseLogic {
 
         uint256 fee = chargeVaultFee(_ipToken, _baseToken, GPAmount);
         uint256 raiseLP = raiseFromLP(_ipToken, _baseToken, GPAmount.sub(fee));
-        uint256 swappedIP = NPUniswap.swap(factory, router, _baseToken, _ipToken,
+        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
                                         GPAmount.add(raiseLP).sub(fee));
         _GPS.setCurIPAmount(_ipToken, _baseToken, swappedIP);
         allocateFunds(_ipToken, _baseToken);

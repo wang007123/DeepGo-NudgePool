@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/SafeMath.sol";
-import "../lib/NPUniswap.sol";
+import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract GPDepositLogic is BaseLogic {
@@ -102,7 +102,7 @@ contract GPDepositLogic is BaseLogic {
         oriBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
         _GPS.setCurGPBalance(_ipToken, _baseToken, oriBalance.add(_amount));
         
-        uint256 swappedIP = NPUniswap.swap(factory, router, _baseToken, _ipToken,
+        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
                                            _amount.add(raiseLP));
         oriBalance = _GPS.getCurIPAmount(_ipToken, _baseToken);
         _GPS.setCurIPAmount(_ipToken, _baseToken, oriBalance.add(swappedIP));
@@ -116,7 +116,7 @@ contract GPDepositLogic is BaseLogic {
         private
         returns (uint256 maxAmount)
     {
-        uint256 price = NPUniswap.getAmountOut(factory, router, _baseToken, _ipToken, 1 ether);
+        uint256 price = NPSwap.getAmountOut(_baseToken, _ipToken, 1 ether);
         uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
         uint256 initPrice = _IPS.getPoolInitPrice(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
@@ -180,7 +180,7 @@ contract GPDepositLogic is BaseLogic {
             return;
         }
 
-        uint256 price = NPUniswap.getAmountOut(factory, router, _ipToken, _baseToken, 1 ether);
+        uint256 price = NPSwap.getAmountOut(_ipToken, _baseToken, 1 ether);
         uint256 len = _GPS.getGPArrayLength(_ipToken, _baseToken);
         // If sub fail, the pool should do GP liquidation.
         uint256 balance = IPAmount.mul(price).div(1 ether).sub(_GPS.getCurRaiseLPAmount(_ipToken, _baseToken));
