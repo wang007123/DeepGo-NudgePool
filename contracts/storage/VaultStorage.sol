@@ -23,27 +23,27 @@ contract VaultStorage {
     }
 
     function setProxy(address _proxy) external {
-        require(admin == address(msg.sender), "Not Permit");
+        require(admin == msg.sender, "Not Permit");
         proxy = _proxy;
     }
 
     function setTotalVault(address _ipt, address _bst, uint256 amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].VT.totalVault = amount;
     }
 
     function setIPWithdrawed(address _ipt, address _bst, uint256 amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].VT.ipWithdrawed = amount;
     }
 
     function setCurVault(address _ipt, address _bst, uint256 amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].VT.curVault = amount;
     }
 
     function setLastUpdateTime(address _ipt, address _bst, uint256 time) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].VT.lastUpdateTime = time;
     }
 

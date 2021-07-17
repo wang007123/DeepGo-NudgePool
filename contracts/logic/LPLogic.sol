@@ -22,7 +22,7 @@ contract LPLogic is BaseLogic {
         returns (uint256 amount)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RAISING);
-        address _lp = address(msg.sender);
+        address _lp = msg.sender;
         uint256 oriLPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
 
         amount = _baseTokensAmount;
@@ -50,7 +50,7 @@ contract LPLogic is BaseLogic {
         returns (uint256 amount)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
-        address _lp = address(msg.sender);
+        address _lp = msg.sender;
 
         amount = _baseTokensAmount;
         IERC20(_baseToken).safeTransferFrom(_lp, address(this), amount);
@@ -74,7 +74,7 @@ contract LPLogic is BaseLogic {
         lockPool(_ipToken, _baseToken)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
-        address _lp = address(msg.sender);
+        address _lp = msg.sender;
         uint256 oriLPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
         uint256 oriAmount = _LPS.getLPBaseAmount(_ipToken, _baseToken, _lp);
         uint256 curRaiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
@@ -99,7 +99,7 @@ contract LPLogic is BaseLogic {
         returns (uint256 amount)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
-        address _lp = address(msg.sender);
+        address _lp = msg.sender;
 
         if (_vaultOnly) {
             amount = _LPS.getLPVaultReward(_ipToken, _baseToken, _lp);

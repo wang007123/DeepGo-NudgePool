@@ -87,7 +87,7 @@ contract IPLogic is BaseLogic {
         lockPool(_ipToken, _baseToken)
     {
         address ip = _IPS.getIPAddress(_ipToken, _baseToken);
-        require(address(msg.sender) == ip, "Not Permit");
+        require(msg.sender == ip, "Not Permit");
         poolAtStage(_ipToken, _baseToken, Stages.AUCTING);
 
         checkIPParams(_ipImpawnRatio, _ipCloseLine, _chargeRatio, _duration);
@@ -107,7 +107,7 @@ contract IPLogic is BaseLogic {
         returns (uint256 amount)
     {
         address ip = _IPS.getIPAddress(_ipToken, _baseToken);
-        require(ip == address(msg.sender), "Not Permit");
+        require(ip == msg.sender, "Not Permit");
 
         amount = _ipTokensAmount;
         IERC20(_ipToken).safeTransferFrom(ip, address(this), amount);

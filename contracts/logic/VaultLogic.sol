@@ -56,7 +56,7 @@ contract VaultLogic is BaseLogic {
         uint256 curVault = _VTS.getCurVault(_ipToken, _baseToken);
 
         vault = vault.mul(80).div(100);
-        require(address(msg.sender) == ip, "Not Permit");
+        require(msg.sender == ip, "Not Permit");
         require(vault.sub(withdrawed) >= _baseTokensAmount, "Withdraw too much");
 
         amount = curVault > _baseTokensAmount ? _baseTokensAmount : curVault;
