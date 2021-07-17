@@ -22,10 +22,6 @@ contract NPStorage is Ownable {
     address public DGTToken;
     address public DGTBeneficiary;
 
-    // Uniswap router and factory
-    address public router;
-    address public factory;
-
     IPStorage public _IPS;
     GPStorage public _GPS;
     LPStorage public _LPS;

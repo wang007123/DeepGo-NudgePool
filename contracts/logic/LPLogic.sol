@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/SafeMath.sol";
-import "../lib/NPUniswap.sol";
+import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract LPLogic is BaseLogic {
@@ -127,7 +127,7 @@ contract LPLogic is BaseLogic {
         private
         returns (uint256 lend)
     {
-        uint256 price = NPUniswap.getAmountOut(factory, router, _ipToken, _baseToken, 1 ether);
+        uint256 price = NPSwap.getAmountOut(_ipToken, _baseToken, 1 ether);
         uint256 IPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
         uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
         uint256 balance = IPAmount.mul(price).div(1 ether);
@@ -143,7 +143,7 @@ contract LPLogic is BaseLogic {
         lend = GPBalance.mul(raiseRatio + RATIO_FACTOR).div(RATIO_FACTOR).sub(balance);
         lend = lend > _amount ? _amount : lend;
 
-        uint256 swappedIP = NPUniswap.swap(factory, router, _baseToken, _ipToken, lend);
+        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken, lend);
         _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, raiseLP.add(lend));
         _GPS.setCurIPAmount(_ipToken, _baseToken, IPAmount.add(swappedIP));
         allocateFunds(_ipToken, _baseToken);
@@ -188,7 +188,7 @@ contract LPLogic is BaseLogic {
         private
         returns (uint256 amount)
     {
-        uint256 price = NPUniswap.getAmountOut(factory, router, _ipToken, _baseToken, 1 ether);
+        uint256 price = NPSwap.getAmountOut(_ipToken, _baseToken, 1 ether);
         uint256 IPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
         uint256 LPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
         uint256 curRaiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
@@ -211,7 +211,7 @@ contract LPLogic is BaseLogic {
         }
 
         uint256 swappedIP = expect.mul(1 ether).div(price);
-        uint256 real = NPUniswap.swap(factory, router, _ipToken, _baseToken, swappedIP);
+        uint256 real = NPSwap.swap(_ipToken, _baseToken, swappedIP);
         _GPS.setCurIPAmount(_ipToken, _baseToken, IPAmount.sub(swappedIP));
         _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, curRaiseLP.sub(expect));
         _LPS.setCurLPAmount(_ipToken, _baseToken, LPAmount.sub(_amount));
