@@ -58,6 +58,7 @@ contract IPLogic is BaseLogic {
     {
         poolAtStage(_ipToken, _baseToken, Stages.AUCTING);
         qualifiedIP(_ip, _ipToken, _baseToken, _ipTokensAmount, _dgtTokensAmount, false);
+        require(block.timestamp < _IPS.getPoolAuctionEndTime(_ipToken, _baseToken), "Auction End");
 
         IERC20(_ipToken).safeTransferFrom(_ip, address(this), _ipTokensAmount);
         IERC20(DGTToken).safeTransferFrom(_ip, address(this), _dgtTokensAmount);
@@ -69,8 +70,7 @@ contract IPLogic is BaseLogic {
         _IPS.setIPTokensAmount(_ipToken, _baseToken, _ipTokensAmount);
         _IPS.setDGTTokensAmount(_ipToken, _baseToken, _dgtTokensAmount);
         
-        if (block.timestamp > _IPS.getPoolAuctionEndTime(_ipToken, _baseToken).sub(30 minutes) &&
-            block.timestamp < _IPS.getPoolAuctionEndTime(_ipToken, _baseToken)) {
+        if (block.timestamp > _IPS.getPoolAuctionEndTime(_ipToken, _baseToken).sub(30 minutes)) {
             _IPS.setPoolAuctionEndTime(_ipToken, _baseToken, block.timestamp.add(30 minutes));
         }
     }
@@ -87,7 +87,7 @@ contract IPLogic is BaseLogic {
         lockPool(_ipToken, _baseToken)
     {
         address ip = _IPS.getIPAddress(_ipToken, _baseToken);
-        require(address(msg.sender) == ip, "Not Permit");
+        require(msg.sender == ip, "Not Permit");
         poolAtStage(_ipToken, _baseToken, Stages.AUCTING);
 
         checkIPParams(_ipImpawnRatio, _ipCloseLine, _chargeRatio, _duration);
@@ -107,7 +107,7 @@ contract IPLogic is BaseLogic {
         returns (uint256 amount)
     {
         address ip = _IPS.getIPAddress(_ipToken, _baseToken);
-        require(ip == address(msg.sender), "Not Permit");
+        require(ip == msg.sender, "Not Permit");
 
         amount = _ipTokensAmount;
         IERC20(_ipToken).safeTransferFrom(ip, address(this), amount);

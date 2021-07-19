@@ -32,62 +32,62 @@ contract GPStorage {
     }
 
     function setProxy(address _proxy) external {
-        require(admin == address(msg.sender), "Not Permit");
+        require(admin == msg.sender, "Not Permit");
         proxy = _proxy;
     }
 
     function setCurGPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].curTotalGPAmount = _amount;
     }
 
     function setCurRaiseLPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].curTotalLPAmount = _amount;
     }
 
     function setCurIPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].curTotalIPAmount = _amount;
     }
 
     function setCurGPBalance(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].curTotalBalance = _amount;
     }
 
     function setGPBaseAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].baseTokensAmount = _amount;
     }
 
     function setGPRunningDepositAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].runningDepositAmount = _amount;
     }
 
     function setGPHoldIPAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].ipTokensAmount = _amount;
     }
 
     function setGPRaiseLPAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].raisedFromLPAmount = _amount;
     }
 
     function setGPBaseBalance(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = _amount;
     }
 
     function insertGP(address _ipt, address _bst, address _gp, uint256 _amount, bool running) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].GPM[_gp].valid == false, "GP Already Exist");
         pools[_ipt][_bst].GPA.push(_gp);
 
@@ -107,7 +107,7 @@ contract GPStorage {
     }
 
     function deleteGP(address _ipt, address _bst, address _gp) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         uint256 id = pools[_ipt][_bst].GPM[_gp].id;
         uint256 length = pools[_ipt][_bst].GPA.length;

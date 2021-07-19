@@ -22,7 +22,7 @@ contract GPDepositLogic is BaseLogic {
         returns (uint256 amount)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RAISING);
-        address _gp = address(msg.sender);
+        address _gp = msg.sender;
         uint256 oriGPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
 
         amount = _baseTokensAmount;
@@ -53,7 +53,7 @@ contract GPDepositLogic is BaseLogic {
         returns (uint256 amount)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
-        address _gp = address(msg.sender);
+        address _gp = msg.sender;
         uint256 maxAmount = updateMaxIPCanRaise(_ipToken, _baseToken);
         uint256 curAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
 
@@ -82,7 +82,7 @@ contract GPDepositLogic is BaseLogic {
         lockPool(_ipToken, _baseToken)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
-        address _gp = address(msg.sender);
+        address _gp = msg.sender;
         uint256 amount = _GPS.getGPRunningDepositAmount(_ipToken, _baseToken, _gp);
 
         require(amount > 0, "Already done");

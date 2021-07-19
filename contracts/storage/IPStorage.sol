@@ -47,12 +47,12 @@ contract IPStorage {
     }
 
     function setProxy(address _proxy) external {
-        require(admin == address(msg.sender), "Not Permit");
+        require(admin == msg.sender, "Not Permit");
         proxy = _proxy;
     }
 
     function insertPool(address _ipt, address _bst) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].valid == false, "Pool Already Exist");
 
         poolsArray.push(Pool(_ipt, _bst));
@@ -63,7 +63,7 @@ contract IPStorage {
     }
 
     function deletePool(address _ipt, address _bst) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].valid == true, "Pool Not Exist");
         uint256 id = pools[_ipt][_bst].id;
         uint256 length = poolsArray.length;
@@ -93,77 +93,77 @@ contract IPStorage {
     }
 
     function setPoolValid(address _ipt, address _bst, bool _valid) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].valid = _valid;
     }
 
     function setPoolLocked(address _ipt, address _bst, bool _locked) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].locked = _locked;
     }
 
     function setPoolStage(address _ipt, address _bst, uint8 _stage) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].stage = _stage;
     }
 
     function setPoolCreateTime(address _ipt, address _bst, uint256 _time) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].createdTime = _time;
     }
 
     function setPoolAuctionEndTime(address _ipt, address _bst, uint256 _time) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].auctionEndTime = _time;
     }
 
     function setPoolInitPrice(address _ipt, address _bst, uint256 _price) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].initPrice = _price;
     }
 
     function setIPInitCanRaise(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].initIPCanRaiseAmount = _amount;
     }
 
     function setIPMaxCanRaise(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].maxIPCanRaiseAmount = _amount;
     }
 
     function setIPAddress(address _ipt, address _bst, address _ip) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].IP.ip = _ip;
     }
 
     function setIPTokensAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].IP.ipTokensAmount = _amount;
     }
 
     function setDGTTokensAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].IP.dgtTokensAmount = _amount;
     }
 
     function setIPImpawnRatio(address _ipt, address _bst, uint32 _ratio) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].IP.param.ipImpawnRatio = _ratio;
     }
 
     function setIPCloseLine(address _ipt, address _bst, uint32 _ratio) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].IP.param.ipCloseLine = _ratio;
     }
 
     function setIPChargeRatio(address _ipt, address _bst, uint32 _ratio) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].IP.param.chargeRatio = _ratio;
     }
 
     function setIPDuration(address _ipt, address _bst, uint256 _duration) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].IP.param.duration = _duration;
     }
 

@@ -27,35 +27,35 @@ contract LPStorage {
     }
 
     function setProxy(address _proxy) external {
-        require(admin == address(msg.sender), "Not Permit");
+        require(admin == msg.sender, "Not Permit");
         proxy = _proxy;
     }
 
     function setCurLPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].curTotalLPAmount = _amount;
     }
 
     function setLPBaseAmount(address _ipt, address _bst, address _lp, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
         pools[_ipt][_bst].LPM[_lp].baseTokensAmount = _amount;
     }
 
     function setLPRunningDepositAmount(address _ipt, address _bst, address _lp, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
         pools[_ipt][_bst].LPM[_lp].runningDepositAmount = _amount;
     }
 
     function setLPVaultReward(address _ipt, address _bst, address _lp, uint256 _amount) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
         pools[_ipt][_bst].LPM[_lp].accVaultReward = _amount;
     }
 
     function insertLP(address _ipt, address _bst, address _lp, uint256 _amount, bool running) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].LPM[_lp].valid == false, "LP Already Exist");
         pools[_ipt][_bst].LPA.push(_lp);
 
@@ -73,7 +73,7 @@ contract LPStorage {
     }
 
     function deleteLP(address _ipt, address _bst, address _lp) external {
-        require(proxy == address(msg.sender), "Not Permit");
+        require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
         uint256 id = pools[_ipt][_bst].LPM[_lp].id;
         uint256 length = pools[_ipt][_bst].LPA.length;
