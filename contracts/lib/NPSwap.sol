@@ -98,7 +98,7 @@ library NPSwap {
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) :
                         (reserve1, reserve0);
     }
-
+    
     function getSwapParameter(
     )
         internal view
@@ -115,6 +115,11 @@ library NPSwap {
         bytes32 initalCodeHashPancake = hex'00fb7f630766e6a796048ea87d01acd3068e8ff67d078148a3fa3f4a84f69bd5';
         //backup codehash from Pancake Github
         //bytes32 initalCodeHashPancake = hex'd0d4c4cd0848c93cb4fd1f498d7013ee6bfb25783ea21593d5834f5d250ece66';
+        
+        //Pancake-swap - BSc testnet
+        address routerPancakeTest = address(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+        address factoryPancakeTest = address(0x6725F303b657a9451d8BA641348b6761A6CC7a17);
+        bytes32 initalCodeHashPancakeTest = hex'd0d4c4cd0848c93cb4fd1f498d7013ee6bfb25783ea21593d5834f5d250ece66';
 
         //Quickswap - Polygon
         address routerQuick = address(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
@@ -125,10 +130,12 @@ library NPSwap {
 
         //Ethereum Main, Ropsten, Rinkeby
         if(chainID == 1 || chainID == 3 || chainID == 4) return(routerUni, factoryUni, initalCodeHashUni);
+        //BSC Mainnet
+        else if(chainID == 56) return(routerPancake, factoryPancake, initalCodeHashPancake);
         //BSC Mainnet ,Testnet
-        if(chainID == 56 || chainID == 97) return(routerPancake, factoryPancake, initalCodeHashPancake);
+        else if(chainID == 97) return(routerPancakeTest, factoryPancakeTest, initalCodeHashPancakeTest);
         //polygon, Mumbai Testnet(testnet of polygon)
-        if(chainID == 137 || chainID == 80001) return(routerQuick, factoryQuick, initalCodeHashQuick);
+        else if(chainID == 137 || chainID == 80001) return(routerQuick, factoryQuick, initalCodeHashQuick);
         require(1 < 0,"Not a supported chainID");
     }
 }
