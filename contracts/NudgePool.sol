@@ -22,17 +22,12 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _vts
     )
     {
+        require(_DGTToken != address(0) && _DGTBeneficiary != address(0) &&
+                _ips != address(0) && _gps != address(0) &&
+                _lps != address(0) && _vts != address(0), "Invalid Address");
+
         DGTToken = _DGTToken;
         DGTBeneficiary = _DGTBeneficiary;
-
-        minRatio = uint32(RATIO_FACTOR * 5 / 1000000);
-        alpha = 0;
-        raiseRatio = uint32(RATIO_FACTOR * 1);
-
-        auctionDuration = 7 days;
-        raisingDuration = 3 days;
-        minimumDuration = 90 days;
-
         _IPS = IPStorage(_ips);
         _GPS = GPStorage(_gps);
         _LPS = LPStorage(_lps);

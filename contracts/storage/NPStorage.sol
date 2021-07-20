@@ -11,13 +11,13 @@ import "./LPStorage.sol";
 contract NPStorage is Ownable {
     uint256 constant RATIO_FACTOR = 1000000;
 
-    uint32	public minRatio;
-    uint32	public alpha; //FIXME negative alpha
-    uint32  public raiseRatio;
+    uint32 public minRatio = uint32(RATIO_FACTOR * 5 / 10000);
+    uint32 public alpha = 0;
+    uint32 public raiseRatio = uint32(RATIO_FACTOR * 1);
 
-    uint256 public auctionDuration;
-    uint256 public raisingDuration;
-    uint256 public minimumDuration;
+    uint256 public auctionDuration = 7 days;
+    uint256 public raisingDuration = 3 days;
+    uint256 public minimumDuration = 90 days;
 
     address public DGTToken;
     address public DGTBeneficiary;

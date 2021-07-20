@@ -136,6 +136,6 @@ library NPSwap {
         else if(chainID == 97) return(routerPancakeTest, factoryPancakeTest, initalCodeHashPancakeTest);
         //polygon, Mumbai Testnet(testnet of polygon)
         else if(chainID == 137 || chainID == 80001) return(routerQuick, factoryQuick, initalCodeHashQuick);
-        require(1 < 0,"Not a supported chainID");
+        else revert("Not Supported chainID");
     }
 }

@@ -156,9 +156,7 @@ contract StateLogic is BaseLogic {
 
             for (uint256 j = i; j != 0; j--) {
                 if (helpArr[j].weight > helpArr[j-1].weight) {
-                    GPAlloc memory tmp;
-                    tmp.gp = helpArr[j].gp;
-                    tmp.weight = helpArr[j].weight;
+                    GPAlloc memory tmp = GPAlloc(helpArr[j].gp, helpArr[j].weight);
                     helpArr[j].gp = helpArr[j-1].gp;
                     helpArr[j].weight = helpArr[j-1].weight;
                     helpArr[j-1].gp = tmp.gp;
