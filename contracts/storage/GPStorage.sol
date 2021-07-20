@@ -33,6 +33,7 @@ contract GPStorage {
 
     function setProxy(address _proxy) external {
         require(admin == msg.sender, "Not Permit");
+        require(_proxy != address(0), "Invalid Address");
         proxy = _proxy;
     }
 
