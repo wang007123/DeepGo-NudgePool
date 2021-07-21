@@ -50,6 +50,19 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         initialized = true;
     }
 
+    function setPause(
+    )
+        external onlyOwner
+    {
+        _pause();
+    }
+
+    function unPause(
+    )
+        external onlyOwner
+    {
+        _unpause();
+    }
 
     function createPool(
         address _ip,
@@ -62,7 +75,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         uint32 _chargeRatio,
         uint256 _duration
     )
-        external
+        external whenNotPaused
     {
         (bool status,) = curVersion.ipc.delegatecall(abi.encodeWithSelector(bytes4(keccak256(
             "createPool(address,address,address,uint256,uint256,uint32,uint32,uint32,uint256)")),
@@ -78,7 +91,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         uint256 _ipTokensAmount,
         uint256 _dgtTokensAmount
     )
-        external
+        external whenNotPaused
     {
         (bool status,) = curVersion.ipc.delegatecall(abi.encodeWithSelector(bytes4(keccak256(
             "auctionPool(address,address,address,uint256,uint256)")),
@@ -94,7 +107,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         uint32 _chargeRatio,
         uint256 _duration
     )
-        external
+        external whenNotPaused
     {
         (bool status,) = curVersion.ipc.delegatecall(abi.encodeWithSelector(bytes4(keccak256(
             "changePoolParam(address,address,uint32,uint32,uint32,uint256)")),
@@ -108,7 +121,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _baseToken,
         uint256 _ipTokensAmount
     )
-        external
+        external whenNotPaused
         returns (uint256 amount)
     {
         (bool status, bytes memory data) = curVersion.ipc.delegatecall(
@@ -126,7 +139,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         uint256 _baseTokensAmount,
         bool _create
     )
-        external
+        external whenNotPaused
         returns (uint256 amount)
     {
         (bool status, bytes memory data) = curVersion.gpdc.delegatecall(
@@ -144,7 +157,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         uint256 _baseTokensAmount,
         bool _create
     )
-        external
+        external whenNotPaused
         returns (uint256 amount)
     {
         (bool status, bytes memory data) = curVersion.gpdc.delegatecall(
@@ -160,7 +173,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _ipToken,
         address _baseToken
     )
-        external
+        external whenNotPaused
     {
         (bool status,) = curVersion.gpdc.delegatecall(
             abi.encodeWithSelector(bytes4(keccak256(
@@ -173,7 +186,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _baseToken,
         uint256 _baseTokensAmount
     )
-        external
+        external whenNotPaused
         returns (uint256 amount)
     {
         (bool status, bytes memory data) = curVersion.gpwc.delegatecall(
@@ -191,7 +204,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         uint256 _baseTokensAmount,
         bool _create
     )
-        external
+        external whenNotPaused
         returns (uint256 amount)
     {
         (bool status, bytes memory data) = curVersion.lpc.delegatecall(
@@ -209,7 +222,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         uint256 _baseTokensAmount,
         bool _create
     )
-        external
+        external whenNotPaused
         returns (uint256 amount)
     {
         (bool status, bytes memory data) = curVersion.lpc.delegatecall(
@@ -225,7 +238,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _ipToken,
         address _baseToken
     )
-        external
+        external whenNotPaused
     {
         (bool status,) = curVersion.lpc.delegatecall(
             abi.encodeWithSelector(bytes4(keccak256(
@@ -239,7 +252,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         uint256 _baseTokensAmount,
         bool _vaultOnly
     )
-        external
+        external whenNotPaused
         returns (uint256 amount)
     {
         (bool status, bytes memory data) = curVersion.lpc.delegatecall(
@@ -255,7 +268,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _ipToken,
         address _baseToken
     )
-        external
+        external whenNotPaused
         returns (bool)
     {
         (bool status, bytes memory data) = curVersion.stc.delegatecall(
@@ -269,7 +282,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _ipToken,
         address _baseToken
     )
-        external
+        external whenNotPaused
         returns (bool)
     {
         (bool status, bytes memory data) = curVersion.stc.delegatecall(
@@ -283,7 +296,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _ipToken,
         address _baseToken
     )
-        external
+        external whenNotPaused
         returns (bool)
     {
         (bool status, bytes memory data) = curVersion.lqdc.delegatecall(
@@ -297,7 +310,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _ipToken,
         address _baseToken
     )
-        external
+        external whenNotPaused
         returns (bool)
     {
         (bool status, bytes memory data) = curVersion.lqdc.delegatecall(
@@ -311,7 +324,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _ipToken,
         address _baseToken
     )
-        external
+        external whenNotPaused
         returns (bool)
     {
         (bool status, bytes memory data) = curVersion.lqdc.delegatecall(
@@ -325,7 +338,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _ipToken,
         address _baseToken
     )
-        external
+        external whenNotPaused
     {
         (bool status,) = curVersion.vtc.delegatecall(
             abi.encodeWithSelector(bytes4(keccak256(
@@ -338,7 +351,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         address _baseToken,
         uint256 _baseTokensAmount
     )
-        external
+        external whenNotPaused
         returns (uint256 amount)
     {
         (bool status, bytes memory data) = curVersion.vtc.delegatecall(
