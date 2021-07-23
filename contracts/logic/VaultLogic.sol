@@ -49,6 +49,7 @@ contract VaultLogic is BaseLogic {
         external
         returns (uint256 amount)
     {
+        // IP can only withdraw 80% money from total vault 
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
         address ip = _IPS.getIPAddress(_ipToken, _baseToken);
         uint256 vault = _VTS.getTotalVault(_ipToken, _baseToken);

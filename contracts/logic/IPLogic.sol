@@ -126,7 +126,11 @@ contract IPLogic is BaseLogic {
         bool create
     )
         internal view
-    {
+    {   
+        /* The are several conditions that need to be filled in order to be a qualified IP:
+         * 1. IP should own and impawn at least minRatio percent of total supply of this token
+         * 2. If the pool is in auction, new bid price should be 1.05 more than current bid price 
+         */        
         require(ipTokensAmount <= IERC20(ipToken).balanceOf(ip) &&
                 ipTokensAmount >= IERC20(ipToken).totalSupply().mul(minRatio).div(RATIO_FACTOR),
                 "Token Not Enough");
@@ -145,7 +149,13 @@ contract IPLogic is BaseLogic {
         uint256 _duration
     )
         internal view
-    {
+    {   
+        /* IP Params should meet following condition:
+         * 1. ipImpawnRatio should be larger than 0 and no larger than 100%
+         * 2. ipCloseLine should be larger than ipImpawnRatio and no no larger than 300%
+         * 3. chargeRatio should be smaller than 100%
+         * 4. duration should no smaller than minimumDuration
+         */
         require(RATIO_FACTOR >= _ipImpawnRatio && _ipImpawnRatio > 0,
                 "invalid impawnRatio");
         require(RATIO_FACTOR.mul(3) >= _ipCloseLine && _ipCloseLine > _ipImpawnRatio,
