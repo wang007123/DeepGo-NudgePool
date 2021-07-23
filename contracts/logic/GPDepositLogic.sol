@@ -117,6 +117,7 @@ contract GPDepositLogic is BaseLogic {
         private
         returns (uint256 maxAmount)
     {
+        // Max amount of baseToken IP can raise changes according to the token price
         uint256 inUnit = 10**ERC20(_baseToken).decimals();
         uint256 price = NPSwap.getAmountOut(_baseToken, _ipToken, inUnit);
         uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
@@ -143,6 +144,7 @@ contract GPDepositLogic is BaseLogic {
         private
         returns (uint256 fee)
     {
+        // Part of GP investment would be transfered into vault as fee
         uint32 chargeRatio = _IPS.getIPChargeRatio(_ipToken, _baseToken);
 
         fee = _amount.mul(chargeRatio).div(RATIO_FACTOR);
