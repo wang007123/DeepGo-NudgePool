@@ -70,7 +70,8 @@ contract IPLogic is BaseLogic {
         _IPS.setIPTokensAmount(_ipToken, _baseToken, _ipTokensAmount);
         _IPS.setDGTTokensAmount(_ipToken, _baseToken, _dgtTokensAmount);
         
-        if (block.timestamp > _IPS.getPoolAuctionEndTime(_ipToken, _baseToken).sub(30 minutes)) {
+        if (auctionDuration > 30 minutes &&
+            block.timestamp > _IPS.getPoolAuctionEndTime(_ipToken, _baseToken).sub(30 minutes)) {
             _IPS.setPoolAuctionEndTime(_ipToken, _baseToken, block.timestamp.add(30 minutes));
         }
     }
