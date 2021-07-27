@@ -5,9 +5,9 @@ import { getBigNumber, sleep } from "./utils";
 
 describe("NudgePool", function() {
   before(async function() {
-    const NPSwapAddress = "0xCb2F41c8e5fCf7c5767297E87a30AAFb0be2C694";
-    const NudgePoolAddress = "0xaCe84EAC66019C493fc01Bf9d1d10eaB599d8f24";
-    const NudgePoolStatusAddress = "0xf00E01699cb1ED527EDF5e11B772EECf97C2E2bb";
+    const NPSwapAddress = "0x27839Bb6045a773f0C280C8c8F0D6cdF92415A31";
+    const NudgePoolAddress = "0x6d7b5D1bda21a02C756aAcecbfe444dede48e731";
+    const NudgePoolStatusAddress = "0xA603Fa2b3A7e79273277F8c2381535B81d5d5AE2";
 
     this.token1 = "0xD33Dc5D483Ed42bDA6C99506c21114e517eDAFd4";
     this.token2 = "0xB638F4D59F85a6036870fDB8e031831267DF9FC0";
@@ -115,7 +115,6 @@ describe("NudgePool", function() {
     // Expect right ip address
     expect(await this.NudgePoolStatus.getIPAddress(
       this.token1, this.token2)).to.be.equal(this.ipAccount2.address);
-    console.log("IPAddress" + this.NudgePoolStatus.getIPAddress(this.token1, this.token2) + "auction pool")
     // Expect right ip token amount
     expect(await this.NudgePoolStatus.getIPTokensAmount(
       this.token1, this.token2)).to.be.equal(getBigNumber(100000));
@@ -128,7 +127,7 @@ describe("NudgePool", function() {
       return
     }
 
-    const changePoolParamTX = await this.NudgePool.connect(this.ipAccount1).changePoolParam(
+    const changePoolParamTX = await this.NudgePool.connect(this.ipAccount2).changePoolParam(
       this.token1,
       this.token2,
       800000,
@@ -147,7 +146,7 @@ describe("NudgePool", function() {
     expect(await this.NudgePoolStatus.getIPDuration(
       this.token1, this.token2)).to.be.equal(600);
     expect(await this.NudgePoolStatus.getIPDGTAmount(
-      this.token1, this.token2)).to.be.equal(0);
+      this.token1, this.token2)).to.be.equal(getBigNumber(30));
   })
 
   it("Check auction end", async function() {
