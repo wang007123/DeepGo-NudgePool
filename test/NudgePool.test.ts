@@ -5,9 +5,9 @@ import { getBigNumber, sleep } from "./utils";
 
 describe("NudgePool", function() {
   before(async function() {
-    const NPSwapAddress = "0x27839Bb6045a773f0C280C8c8F0D6cdF92415A31";
-    const NudgePoolAddress = "0x6d7b5D1bda21a02C756aAcecbfe444dede48e731";
-    const NudgePoolStatusAddress = "0xA603Fa2b3A7e79273277F8c2381535B81d5d5AE2";
+    const NPSwapAddress = "0x0f1AdEEF74D8Fe72552D85ebC53Aa5ee7A38AA8f";
+    const NudgePoolAddress = "0x902bd5D8B7713d1c5103E20EdcDB2A741A5fd994";
+    const NudgePoolStatusAddress = "0x1894Cef0661a05D2B25DEC6C8DE8B0663ae55FfB";
 
     this.token1 = "0xD33Dc5D483Ed42bDA6C99506c21114e517eDAFd4";
     this.token2 = "0xB638F4D59F85a6036870fDB8e031831267DF9FC0";
