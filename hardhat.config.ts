@@ -5,7 +5,7 @@ import "hardhat-deploy"
 import "hardhat-contract-sizer"
 import "@tenderly/hardhat-tenderly"
 
-require("./task/rollback.ts")
+require("./task/auto-compile.ts")
 
 import { HardhatUserConfig } from "hardhat/types"
 
