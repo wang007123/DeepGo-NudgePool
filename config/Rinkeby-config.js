@@ -2,6 +2,7 @@ module.exports = {
     RINKEBY_CONFIG: {
         NudgePool: "0xFA6681461FB88b7084994200b460dE461F5BdD39",
 
+        // Information for setUpgrade()
         newVersion: "0.0.2",
         newIPLogic: "0x7058663297e7667480486602913b42102274691b",
         newGPDepositLogic: "0x5Daed5D252405A84C5bA06978F9Ce8109828389c",
