@@ -44,3 +44,11 @@ task("set-upgrade", "Set up a new upgrade for logic contract address").setAction
         console.log("Successful set up a new upgrade");
     });
 });
+
+task("execute-upgrade", "Execute the delayed upgrade").setAction(async (_, { ethers }) => {
+    const NudgePoolAddress = RINKEBY_CONFIG.NudgePool;
+    const NudgePool = await ethers.getContractAt('NudgePool', NudgePoolAddress);
+    await NudgePool.executeUpgrade().then(() => {
+      console.log("Upgrade successful executed");
+    });
+});
