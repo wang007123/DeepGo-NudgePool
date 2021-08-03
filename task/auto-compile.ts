@@ -19,3 +19,11 @@ task("pause", "Pasue all the external NudgePool functions").setAction(async (_, 
       console.log("NudgePool successful paused");
     });
 });
+
+task("unpause", "Unpasue all the external NudgePool functions").setAction(async (_, { ethers }) => {
+    const NudgePoolAddress = RINKEBY_CONFIG.NudgePool;
+    const NudgePool = await ethers.getContractAt('NudgePool', NudgePoolAddress);
+    await NudgePool.unPause().then(() => {
+        console.log("NudgePool successful unpaused");
+    });
+});
