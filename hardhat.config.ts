@@ -5,6 +5,8 @@ import "hardhat-deploy"
 import "hardhat-contract-sizer"
 import "@tenderly/hardhat-tenderly"
 
+require("./task/rollback.ts")
+
 import { HardhatUserConfig } from "hardhat/types"
 
 const accounts = {
