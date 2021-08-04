@@ -1,9 +1,10 @@
-import "dotenv/config"
 import "@nomiclabs/hardhat-waffle"
 import "@nomiclabs/hardhat-ethers"
+import "@tenderly/hardhat-tenderly"
+import "dotenv/config"
 import "hardhat-deploy"
 import "hardhat-contract-sizer"
-import "@tenderly/hardhat-tenderly"
+import "./task/operation.js"
 
 import { HardhatUserConfig } from "hardhat/types"
 
