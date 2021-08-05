@@ -26,9 +26,19 @@ contract LiquidationLogic is BaseLogic {
         uint256 IPAmount = _IPS.getIPTokensAmount(_ipToken, _baseToken);
         uint32 closeLine = _IPS.getIPCloseLine(_ipToken, _baseToken);
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
+        uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
+        uint256 closeLineAmount = IPAmount.mul(price).div(inUnit).mul(closeLine).div(RATIO_FACTOR);
+        uint256 curIPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
 
-        if (IPAmount.mul(price).div(inUnit).mul(closeLine) <= GPAmount.mul(RATIO_FACTOR)) {
-            doIPLiquidation(_ipToken, _baseToken);
+        // Check the situation of IP liquidation
+        if (closeLineAmount <= GPAmount) {
+            // Check the situation of GP liquidation and the lowest swap boundary
+            if (curIPAmount.mul(price).div(inUnit) <= raiseLP &&
+                IPAmount.add(curIPAmount).mul(price).div(inUnit).mul(RATIO_FACTOR) <= raiseLP.mul(raiseLPLossRatio)) {
+                doIPLiquidation(_ipToken, _baseToken, true);
+            } else {
+                doIPLiquidation(_ipToken, _baseToken, false);
+            }
             return true;
         }
 
@@ -48,8 +58,13 @@ contract LiquidationLogic is BaseLogic {
         uint256 price = NPSwap.getAmountOut(_ipToken, _baseToken, inUnit);
         uint256 IPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
         uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
+        uint32 closeLine = _IPS.getIPCloseLine(_ipToken, _baseToken);
+        uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
 
-        if (IPAmount.mul(price).div(inUnit) <= raiseLP) {
+        // Only do GP liquidation when IP did not reach the closeline
+        if (IPAmount.mul(price).div(inUnit).mul(closeLine) <= GPAmount.mul(RATIO_FACTOR)) {
+            return false;
+        } else if (IPAmount.mul(price).div(inUnit) <= raiseLP) {
             doGPLiquidation(_ipToken, _baseToken);
             return true;
         }
@@ -79,7 +94,8 @@ contract LiquidationLogic is BaseLogic {
 
     function doIPLiquidation(
         address _ipToken,
-        address _baseToken
+        address _baseToken,
+        bool _raiseLPLoss
     )
         private
     {
@@ -93,16 +109,25 @@ contract LiquidationLogic is BaseLogic {
         IPAmount = IPAmount.add(IPStake);
         uint256 requireIP = NPSwap.getAmountIn(_ipToken, _baseToken, raiseLP);
         requireIP = requireIP > IPAmount ? IPAmount : requireIP;
-        if (requireIP > 0) {
+        if (requireIP > 0 && !_raiseLPLoss) {
             belongLP = NPSwap.swap(_ipToken, _baseToken, requireIP);
         }
+
         belongGP = IPAmount.sub(requireIP);
         belongLP = belongLP.add(LPBase.sub(raiseLP));
         divideVault(_ipToken, _baseToken);
-        repayLP(_ipToken, _baseToken, belongLP);
-        repayGP(_ipToken, _baseToken, belongGP, false);
-        repayIP(_ipToken, _baseToken, true);
 
+        if (_raiseLPLoss) {
+            belongLP = LPBase.sub(raiseLP);
+            repayLP(_ipToken, _baseToken, IPAmount, false);
+            repayLP(_ipToken, _baseToken, belongLP, true);
+            repayGP(_ipToken, _baseToken, 0, false);
+            repayIP(_ipToken, _baseToken, true);
+        } else {
+            repayLP(_ipToken, _baseToken, belongLP, true);
+            repayGP(_ipToken, _baseToken, belongGP, false);
+            repayIP(_ipToken, _baseToken, true);
+        }
     }
 
     function doGPLiquidation(
@@ -122,7 +147,7 @@ contract LiquidationLogic is BaseLogic {
 
         belongLP = belongLP.add(LPBase.sub(raiseLP));
         divideVault(_ipToken, _baseToken);
-        repayLP(_ipToken, _baseToken, belongLP);
+        repayLP(_ipToken, _baseToken, belongLP, true);
         repayGP(_ipToken, _baseToken, 0, true);
         repayIP(_ipToken, _baseToken, false);
     }
@@ -151,7 +176,7 @@ contract LiquidationLogic is BaseLogic {
         belongLP = belongLP.sub(chargeLPFee(_ipToken, _baseToken));
 
         divideVault(_ipToken, _baseToken);
-        repayLP(_ipToken, _baseToken, belongLP);
+        repayLP(_ipToken, _baseToken, belongLP, true);
         repayGP(_ipToken, _baseToken, belongGP, true);
         repayIP(_ipToken, _baseToken, false);
     }
@@ -189,7 +214,8 @@ contract LiquidationLogic is BaseLogic {
     function repayLP(
         address _ipToken,
         address _baseToken,
-        uint256 _amount
+        uint256 _amount,
+        bool _base
     )
         private
     {
@@ -205,13 +231,18 @@ contract LiquidationLogic is BaseLogic {
             uint256 curAmount = _amount.mul(amount).div(LPAmount);
             resAmount -= curAmount;
             curAmount = i == 1 ? curAmount.add(resAmount) : curAmount;
-            uint256 belongLP = reward.add(curAmount);
-            IERC20(_baseToken).safeTransfer(lp, belongLP);
-            _LPS.deleteLP(_ipToken, _baseToken, lp);
+            if (_base) {
+                uint256 belongLP = reward.add(curAmount);
+                IERC20(_baseToken).safeTransfer(lp, belongLP);
+                _LPS.deleteLP(_ipToken, _baseToken, lp);
+            } else {
+                IERC20(_ipToken).safeTransfer(lp, curAmount);
+            }
         }
-
-        // Reset Pool LP Info
-        _LPS.setCurLPAmount(_ipToken, _baseToken, 0);
+        if(_base){
+            // Reset Pool LP Info
+            _LPS.setCurLPAmount(_ipToken, _baseToken, 0);
+        }
     }
 
     function repayGP(
