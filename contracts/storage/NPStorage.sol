@@ -14,6 +14,8 @@ contract NPStorage is Ownable {
     uint32 public minRatio = uint32(RATIO_FACTOR * 5 / 10000);
     uint32 public alpha = 0;
     uint32 public raiseRatio = uint32(RATIO_FACTOR * 1);
+    // Lowest swap boundary
+    uint32 public raiseLPLossRatio = 800000;
 
     uint256 public auctionDuration = 7 days;
     uint256 public raisingDuration = 3 days;

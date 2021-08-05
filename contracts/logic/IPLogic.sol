@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/SafeMath.sol";
+import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract IPLogic is BaseLogic {
@@ -24,7 +25,7 @@ contract IPLogic is BaseLogic {
         external
         poolNotExist(_ipToken, _baseToken)
     {
-
+        require(isContract(NPSwap.pairFor(_ipToken, _baseToken)), "No liquidity");
         qualifiedIP(_ip, _ipToken, _baseToken, _ipTokensAmount, _dgtTokensAmount, true);
         checkIPParams(_ipImpawnRatio, _ipCloseLine, _chargeRatio, _duration);
 
@@ -44,6 +45,19 @@ contract IPLogic is BaseLogic {
         _IPS.setIPDuration(_ipToken, _baseToken, _duration);
 
         poolTransitNextStage(_ipToken, _baseToken);
+    }
+
+    function isContract(address account) internal view returns (bool) {
+        // This method relies in extcodesize, which returns 0 for contracts in
+        // construction, since the code is only stored at the end of the
+        // constructor execution.
+
+        uint256 size;
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
     }
 
     function auctionPool(
