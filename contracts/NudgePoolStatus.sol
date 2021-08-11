@@ -18,7 +18,8 @@ contract NudgePoolStatus {
         CREATING,
         AUCTING,
         RAISING,
-        RUNNING
+        RUNNING,
+        LIQUIDATION
     }
 
     enum Keys {

@@ -120,6 +120,34 @@ contract LPLogic is BaseLogic {
         return amount;
     }
 
+    function LPWithdrawLiquidation(
+        address _ipToken,
+        address _baseToken
+    )
+        external
+        returns (uint256 amount)
+    {
+        poolAtStage(_ipToken, _baseToken, Stages.LIQUIDATION);
+
+        address _lp = msg.sender;
+        uint256 totalIPAmount = _LPS.getLiquidationIPAmount(_ipToken, _baseToken);
+        uint256 totalBaseAmount =  _LPS.getLiquidationBaseAmount(_ipToken, _baseToken);
+        uint256 totalLPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
+        uint256 LPAmount = _LPS.getLPBaseAmount(_ipToken, _baseToken, _lp);
+        uint256 reward = _LPS.getLPVaultReward(_ipToken, _baseToken, _lp);
+
+        if (totalIPAmount > 0) {
+            IERC20(_ipToken).safeTransfer(_lp, totalIPAmount.mul(LPAmount).div(totalLPAmount));
+        }
+
+        if (totalBaseAmount > 0) {
+            reward.add(totalBaseAmount.mul(LPAmount).div(totalLPAmount));
+        }
+
+        IERC20(_baseToken).safeTransfer(_lp, reward);
+        _LPS.deleteLP(_ipToken, _baseToken, _lp);
+    }
+
     function lendToGP(
         address _ipToken,
         address _baseToken,

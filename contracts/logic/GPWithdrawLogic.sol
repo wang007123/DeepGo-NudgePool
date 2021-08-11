@@ -20,8 +20,10 @@ contract GPWithdrawLogic is BaseLogic {
         lockPool(_ipToken, _baseToken)
         returns (uint256 amount)
     {
+        poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
         address _gp = msg.sender;
         require(_GPS.getGPValid(_ipToken, _baseToken, _gp) == true, "GP Not Exist");
+
         // Withdraw all base token, ignore input amount
         uint256 belongLP = _GPS.getGPRaiseLPAmount(_ipToken, _baseToken, _gp);
         uint256 IPAmount = _GPS.getGPHoldIPAmount(_ipToken, _baseToken, _gp);
@@ -57,5 +59,31 @@ contract GPWithdrawLogic is BaseLogic {
 
         _GPS.deleteGP(_ipToken, _baseToken, _gp);
         return amount;
+    }
+
+    function GPWithdrawLiquidation(
+        address _ipToken,
+        address _baseToken
+    )
+        external
+        returns (uint256 amount)
+    {
+        poolAtStage(_ipToken, _baseToken, Stages.LIQUIDATION);
+
+        address _gp = msg.sender;
+        uint256 totalIPAmount = _GPS.getLiquidationIPAmount(_ipToken, _baseToken);
+        uint256 totalBaseAmount =  _GPS.getLiquidationBaseAmount(_ipToken, _baseToken);
+        uint256 totalBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
+        uint256 balance = _GPS.getGPBaseBalance(_ipToken, _baseToken, _gp);
+
+        if (totalIPAmount > 0) {
+            IERC20(_ipToken).safeTransfer(_gp, totalIPAmount.mul(balance).div(totalBalance));
+        }
+
+        if (totalBaseAmount > 0) {
+            IERC20(_baseToken).safeTransfer(_gp, totalBaseAmount.mul(balance).div(totalBalance));
+        }
+
+        _GPS.deleteGP(_ipToken, _baseToken, _gp);
     }
 }

@@ -128,6 +128,8 @@ contract LiquidationLogic is BaseLogic {
             repayGP(_ipToken, _baseToken, belongGP, false);
             repayIP(_ipToken, _baseToken, true);
         }
+
+        poolTransitNextStage(_ipToken, _baseToken);
     }
 
     function doGPLiquidation(
@@ -150,6 +152,8 @@ contract LiquidationLogic is BaseLogic {
         repayLP(_ipToken, _baseToken, belongLP, true);
         repayGP(_ipToken, _baseToken, 0, true);
         repayIP(_ipToken, _baseToken, false);
+
+        poolTransitNextStage(_ipToken, _baseToken);
     }
 
     function runningEnd(
@@ -179,6 +183,8 @@ contract LiquidationLogic is BaseLogic {
         repayLP(_ipToken, _baseToken, belongLP, true);
         repayGP(_ipToken, _baseToken, belongGP, true);
         repayIP(_ipToken, _baseToken, false);
+
+        poolTransitNextStage(_ipToken, _baseToken);
     }
 
     function divideVault(
@@ -189,12 +195,7 @@ contract LiquidationLogic is BaseLogic {
     {
         _LPS.divideVault(_ipToken, _baseToken,
                          _VTS.getCurVault(_ipToken, _baseToken));
-
-        // Reset Pool Vault Info
-        _VTS.setTotalVault(_ipToken, _baseToken, 0);
-        _VTS.setIPWithdrawed(_ipToken, _baseToken, 0);
         _VTS.setCurVault(_ipToken, _baseToken, 0);
-        _VTS.setLastUpdateTime(_ipToken, _baseToken, 0);
     }
 
     function repayLP(
@@ -205,29 +206,10 @@ contract LiquidationLogic is BaseLogic {
     )
         private
     {
-        uint256 len = _LPS.getLPArrayLength(_ipToken, _baseToken);
-        uint256 LPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
-        uint256 resAmount = _amount;
-
-        for (uint256 i = len; i > 0; i--) {
-            address lp = _LPS.getLPByIndex(_ipToken, _baseToken, i - 1);
-            uint256 reward = _LPS.getLPVaultReward(_ipToken, _baseToken, lp);
-            uint256 amount = _LPS.getLPBaseAmount(_ipToken, _baseToken, lp);
-
-            uint256 curAmount = _amount.mul(amount).div(LPAmount);
-            resAmount -= curAmount;
-            curAmount = i == 1 ? curAmount.add(resAmount) : curAmount;
-            if (_base) {
-                uint256 belongLP = reward.add(curAmount);
-                IERC20(_baseToken).safeTransfer(lp, belongLP);
-                _LPS.deleteLP(_ipToken, _baseToken, lp);
-            } else {
-                IERC20(_ipToken).safeTransfer(lp, curAmount);
-            }
-        }
-        if(_base){
-            // Reset Pool LP Info
-            _LPS.setCurLPAmount(_ipToken, _baseToken, 0);
+        if (_base) {
+            _LPS.setLiquidationBaseAmount(_ipToken, _baseToken, _amount);
+        } else {
+            _LPS.setLiquidationIPAmount(_ipToken, _baseToken, _amount);
         }
     }
 
@@ -239,34 +221,11 @@ contract LiquidationLogic is BaseLogic {
     )
         private
     {
-        uint256 len = _GPS.getGPArrayLength(_ipToken, _baseToken);
-        uint256 GPBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
-        uint256 resAmount = _amount;
-
-        for (uint256 i = len; i > 0; i--) {
-            address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i - 1);
-
-            if (_amount > 0) {
-                uint256 balance = _GPS.getGPBaseBalance(_ipToken, _baseToken, gp);
-                uint256 belongGP = _amount.mul(balance).div(GPBalance);
-                resAmount -= belongGP;
-                belongGP = i == 1? belongGP.add(resAmount) : belongGP;
-
-                if (_base) {
-                    IERC20(_baseToken).safeTransfer(gp, belongGP);
-                } else {
-                    IERC20(_ipToken).safeTransfer(gp, belongGP);
-                }
-            }
-            
-            _GPS.deleteGP(_ipToken, _baseToken, gp);
+        if (_base) {
+            _GPS.setLiquidationBaseAmount(_ipToken, _baseToken, _amount);
+        } else {
+            _GPS.setLiquidationIPAmount(_ipToken, _baseToken, _amount);
         }
-
-        // Reset Pool GP Info
-        _GPS.setCurGPAmount(_ipToken, _baseToken, 0);
-        _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, 0);
-        _GPS.setCurIPAmount(_ipToken, _baseToken, 0);
-        _GPS.setCurGPBalance(_ipToken, _baseToken, 0);
     }
 
     function repayIP(
@@ -276,24 +235,13 @@ contract LiquidationLogic is BaseLogic {
     )
         private
     {
-        if (!ipLiquidation) {
-            uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
-            address ip = _IPS.getIPAddress(_ipToken, _baseToken);
-            IERC20(_ipToken).safeTransfer(ip, IPStake);
+        if (ipLiquidation) {
+            return;
         }
-    
-        // Reset Pool Info
-        poolResetState(_ipToken, _baseToken);
-    }
 
-    function poolResetState(
-        address _ipToken,
-        address _baseToken
-    )
-        private
-    {
-        _IPS.setPoolStage(_ipToken, _baseToken, uint8(Stages.FINISHED));
-        _IPS.deletePool(_ipToken, _baseToken);
+        uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
+        address ip = _IPS.getIPAddress(_ipToken, _baseToken);
+        IERC20(_ipToken).safeTransfer(ip, IPStake);
     }
 
     function chargeGPFee(

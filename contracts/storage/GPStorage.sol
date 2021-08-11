@@ -18,6 +18,8 @@ contract GPStorage {
         uint256     curTotalLPAmount; // baseToken unit
         uint256     curTotalIPAmount; // baseToken swapped into ipToken amount
         uint256     curTotalBalance; // baseToken unit
+        uint256     liquidationBaseAmount; // baseToken repay to GP
+        uint256     liquidationIPAmount; // IPToken repay to GP
 
         address[]   GPA;
         mapping(address => GPInfo) GPM;
@@ -55,6 +57,16 @@ contract GPStorage {
     function setCurGPBalance(address _ipt, address _bst, uint256 _amount) external {
         require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].curTotalBalance = _amount;
+    }
+
+    function setLiquidationBaseAmount(address _ipt, address _bst, uint256 _amount) external {
+        require(proxy == msg.sender, "Not Permit");
+        pools[_ipt][_bst].liquidationBaseAmount = _amount;
+    }
+
+    function setLiquidationIPAmount(address _ipt, address _bst, uint256 _amount) external {
+        require(proxy == msg.sender, "Not Permit");
+        pools[_ipt][_bst].liquidationIPAmount = _amount;
     }
 
     function setGPBaseAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
@@ -140,6 +152,14 @@ contract GPStorage {
 
     function getCurGPBalance(address _ipt, address _bst) external view returns(uint256) {
         return pools[_ipt][_bst].curTotalBalance;
+    }
+
+    function getLiquidationBaseAmount(address _ipt, address _bst) external view returns(uint256) {
+        return pools[_ipt][_bst].liquidationBaseAmount;
+    }
+
+    function getLiquidationIPAmount(address _ipt, address _bst) external view returns(uint256) {
+        return pools[_ipt][_bst].liquidationIPAmount;
     }
 
     function getGPBaseAmount(address _ipt, address _bst, address _gp) external view returns(uint256) {

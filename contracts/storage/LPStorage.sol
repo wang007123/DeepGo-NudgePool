@@ -17,6 +17,8 @@ contract LPStorage {
 
     struct PoolInfo {
         uint256     curTotalLPAmount; // baseToken unit
+        uint256     liquidationBaseAmount; // baseToken repay to LP
+        uint256     liquidationIPAmount; // IPToken repay to LP
 
         address[]   LPA;
         mapping(address => LPInfo) LPM;
@@ -42,6 +44,16 @@ contract LPStorage {
     function setCurLPAmount(address _ipt, address _bst, uint256 _amount) external {
         require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].curTotalLPAmount = _amount;
+    }
+
+    function setLiquidationBaseAmount(address _ipt, address _bst, uint256 _amount) external {
+        require(proxy == msg.sender, "Not Permit");
+        pools[_ipt][_bst].liquidationBaseAmount = _amount;
+    }
+
+    function setLiquidationIPAmount(address _ipt, address _bst, uint256 _amount) external {
+        require(proxy == msg.sender, "Not Permit");
+        pools[_ipt][_bst].liquidationIPAmount = _amount;
     }
 
     function divideVault(address _ipt, address _bst, uint256 _vault) external {
@@ -118,6 +130,14 @@ contract LPStorage {
 
     function getCurLPAmount(address _ipt, address _bst) external view returns(uint256) {
         return pools[_ipt][_bst].curTotalLPAmount;
+    }
+
+    function getLiquidationBaseAmount(address _ipt, address _bst) external view returns(uint256) {
+        return pools[_ipt][_bst].liquidationBaseAmount;
+    }
+
+    function getLiquidationIPAmount(address _ipt, address _bst) external view returns(uint256) {
+        return pools[_ipt][_bst].liquidationIPAmount;
     }
 
     function getLPBaseAmount(address _ipt, address _bst, address _lp) external view returns(uint256) {
