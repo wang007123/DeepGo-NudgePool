@@ -187,22 +187,8 @@ contract LiquidationLogic is BaseLogic {
     )
         private
     {
-        uint256 curVault = _VTS.getCurVault(_ipToken, _baseToken);
-        uint256 len = _LPS.getLPArrayLength(_ipToken, _baseToken);
-        uint256 LPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
-        uint resVault = curVault;
-
-        for (uint256 i = 0; i < len; i++) {
-            address lp = _LPS.getLPByIndex(_ipToken, _baseToken, i);
-            uint256 reward = _LPS.getLPVaultReward(_ipToken, _baseToken, lp);
-            uint256 amount = _LPS.getLPBaseAmount(_ipToken, _baseToken, lp);
-
-            uint256 tmpVault = curVault.mul(amount).div(LPAmount);
-            resVault -= tmpVault;
-            tmpVault = i == len - 1 ? tmpVault.add(resVault) : tmpVault;
-            reward = reward.add(tmpVault);
-            _LPS.setLPVaultReward(_ipToken, _baseToken, lp, reward);
-        }
+        _LPS.divideVault(_ipToken, _baseToken,
+                         _VTS.getCurVault(_ipToken, _baseToken));
 
         // Reset Pool Vault Info
         _VTS.setTotalVault(_ipToken, _baseToken, 0);
