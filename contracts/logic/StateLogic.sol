@@ -123,11 +123,10 @@ contract StateLogic is BaseLogic {
         uint256 maxAmount = _IPS.getIPMaxCanRaise(_ipToken, _baseToken);
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
         uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
+
         maxAmount = maxAmount > GPAmount ? GPAmount : maxAmount;
         if (IPAmount.mul(price).div(inUnit).mul(closeLine) <= maxAmount.mul(RATIO_FACTOR)) {
-            //Pently to IP
-            IERC20(_ipToken).safeTransfer(owner(), IPStake);
-            repayGPLP(_ipToken, _baseToken);
+            doRaisingLiquidation(_ipToken, _baseToken);
         } else {
             GPAmount = allocateGP(_ipToken, _baseToken);
             // Transit to next stage when raised zero amount.
@@ -146,41 +145,26 @@ contract StateLogic is BaseLogic {
         }
     }
 
-    function repayGPLP(
+    function doRaisingLiquidation(
         address _ipToken,
         address _baseToken
     )
         private
     {
-        uint256 lenLP = _LPS.getLPArrayLength(_ipToken, _baseToken);
-        uint256 lenGP = _GPS.getGPArrayLength(_ipToken, _baseToken);
+        // Penalty to IP, transfer stake token to owner
+        IERC20(_ipToken).safeTransfer(owner(), IPStake);
 
-        for (uint256 i = lenLP; i > 0; i--) {
-            address lp = _LPS.getLPByIndex(_ipToken, _baseToken, i - 1);
-            uint256 amountLP = _LPS.getLPBaseAmount(_ipToken, _baseToken, lp);
-            IERC20(_baseToken).safeTransfer(lp, amountLP);
-            _LPS.deleteLP(_ipToken, _baseToken, lp);
-        }
+        // Repay all GP token back
+        uint256 totalGPAmount= _GPS.getCurGPAmount(_ipToken, _baseToken);
+        _GPS.setLiquidationBaseAmount(_ipToken, _baseToken, totalGPAmount);
 
-        for (uint256 j = lenGP; j > 0; j--) {
-            address gp = _GPS.getGPByIndex(_ipToken, _baseToken, j - 1);
-            uint256 amountGP = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
-            IERC20(_baseToken).safeTransfer(gp, amountGP);
-            _GPS.deleteGP(_ipToken, _baseToken, gp);
-        }
+        // Repay all LP token back
+        uint256 totalLPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
+        _LPS.setLiquidationBaseAmount(_ipToken, _baseToken, totalLPAmount);
 
-        // Reset Pool LP Info
-        _LPS.setCurLPAmount(_ipToken, _baseToken, 0);
-        // Reset Pool GP Info
-        _GPS.setCurGPAmount(_ipToken, _baseToken, 0);
-        _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, 0);
-        _GPS.setCurIPAmount(_ipToken, _baseToken, 0);
-        _GPS.setCurGPBalance(_ipToken, _baseToken, 0);
-        //Reset Pool Info
-        _IPS.setPoolStage(_ipToken, _baseToken, uint8(Stages.FINISHED));
-        _IPS.deletePool(_ipToken, _baseToken);
+        // Transit pool to LIQUIDATION stage
+        _IPS.setPoolStage(_ipToken, _baseToken, uint8(Stages.LIQUIDATION));
     }
-
 
     function allocateGP(
         address _ipToken,
