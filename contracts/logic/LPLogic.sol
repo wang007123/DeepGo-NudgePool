@@ -176,38 +176,9 @@ contract LPLogic is BaseLogic {
         uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken, lend);
         _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, raiseLP.add(lend));
         _GPS.setCurIPAmount(_ipToken, _baseToken, IPAmount.add(swappedIP));
-        allocateFunds(_ipToken, _baseToken);
+        _GPS.allocateFunds(_ipToken, _baseToken);
 
         return lend;
-    }
-
-    function allocateFunds(
-        address _ipToken,
-        address _baseToken
-    )
-        private
-    {
-        uint256 len = _GPS.getGPArrayLength(_ipToken, _baseToken);
-        uint256 balance = _GPS.getCurGPBalance(_ipToken, _baseToken);
-        uint256 IPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
-        uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
-        uint256 resIPAmount = IPAmount;
-        uint256 resRaiseLP = raiseLP;
-
-        for (uint256 i = 0; i < len; i++) {
-            address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i);
-            uint256 gpBalance = _GPS.getGPBaseBalance(_ipToken, _baseToken, gp);
-
-            uint256 curAmount = gpBalance.mul(IPAmount).div(balance);
-            resIPAmount -= curAmount;
-            curAmount = i == len - 1 ? curAmount.add(resIPAmount) : curAmount;
-            _GPS.setGPHoldIPAmount(_ipToken, _baseToken, gp, curAmount);
-
-            curAmount = gpBalance.mul(raiseLP).div(balance);
-            resRaiseLP -= curAmount;
-            curAmount = i == len - 1 ? curAmount.add(resRaiseLP) : curAmount;
-            _GPS.setGPRaiseLPAmount(_ipToken, _baseToken, gp, curAmount);
-        }
     }
 
     function reclaimFromGP(
@@ -246,7 +217,7 @@ contract LPLogic is BaseLogic {
         _GPS.setCurIPAmount(_ipToken, _baseToken, IPAmount.sub(swappedIP));
         _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, curRaiseLP.sub(expect));
         _LPS.setCurLPAmount(_ipToken, _baseToken, LPAmount.sub(_amount));
-        allocateFunds(_ipToken, _baseToken);
+        _GPS.allocateFunds(_ipToken, _baseToken);
 
         amount = real > expect ? _amount.add(real.sub(expect)) :
                    _amount.sub(expect.sub(real));

@@ -2,22 +2,26 @@
 
 pragma solidity ^0.8.0;
 
+import "../lib/SafeMath.sol";
+
 contract GPStorage {
+    using SafeMath for uint256;
+
     struct GPInfo {
         bool        valid;
         uint256     id; // index in GPA
         uint256     baseTokensAmount; // baseToken unit
+        uint256     baseTokensBalance; // ipTokensAmount * price - raisedFromLPAmount
         uint256     runningDepositAmount;
         uint256     ipTokensAmount; // ipToken unit, include GP and LP
         uint256     raisedFromLPAmount; // baseToken unit
-        uint256     baseTokensBalance; // ipTokensAmount * price - raisedFromLPAmount
     }
 
     struct PoolInfo {
         uint256     curTotalGPAmount; // baseToken unit
+        uint256     curTotalBalance; // baseToken unit
         uint256     curTotalLPAmount; // baseToken unit
         uint256     curTotalIPAmount; // baseToken swapped into ipToken amount
-        uint256     curTotalBalance; // baseToken unit
         uint256     liquidationBaseAmount; // baseToken repay to GP
         uint256     liquidationIPAmount; // IPToken repay to GP
 
@@ -202,5 +206,32 @@ contract GPStorage {
 
     function getGPAddresses(address _ipt, address _bst) external view returns(address[] memory) {
         return pools[_ipt][_bst].GPA;
+    }
+
+    function allocateFunds(address _ipt, address _bst) external {
+        require(proxy == msg.sender, "Not Permit");
+
+        uint256 len = pools[_ipt][_bst].GPA.length;
+        uint256 balance = pools[_ipt][_bst].curTotalBalance;
+        uint256 IPAmount = pools[_ipt][_bst].curTotalIPAmount;
+        uint256 raiseLP = pools[_ipt][_bst].curTotalLPAmount;
+        uint256 resIPAmount = IPAmount;
+        uint256 resRaiseLP = raiseLP;
+
+        for (uint256 i = 0; i < len; i++) {
+            address gp = pools[_ipt][_bst].GPA[i];
+            uint256 gpBalance = pools[_ipt][_bst].GPM[gp].baseTokensBalance;
+
+            uint256 curIPAmount = gpBalance.mul(IPAmount).div(balance);
+            resIPAmount -= curIPAmount;
+            curIPAmount = i == len - 1 ? curIPAmount.add(resIPAmount) : curIPAmount;
+
+            uint256 curRaiseAmount = gpBalance.mul(raiseLP).div(balance);
+            resRaiseLP -= curRaiseAmount;
+            curRaiseAmount = i == len - 1 ? curRaiseAmount.add(resRaiseLP) : curRaiseAmount;
+
+            pools[_ipt][_bst].GPM[gp].ipTokensAmount = curIPAmount;
+            pools[_ipt][_bst].GPM[gp].raisedFromLPAmount = curRaiseAmount;
+        }
     }
 }
