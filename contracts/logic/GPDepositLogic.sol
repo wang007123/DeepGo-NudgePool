@@ -12,6 +12,8 @@ contract GPDepositLogic is BaseLogic {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
+    uint256 constant MAX_GP_NUMBER = 500;
+
     function GPDepositRaising(
         address _ipToken,
         address _baseToken,
@@ -23,6 +25,7 @@ contract GPDepositLogic is BaseLogic {
         returns (uint256 amount)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RAISING);
+
         address _gp = msg.sender;
         uint256 oriGPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
 
@@ -40,6 +43,7 @@ contract GPDepositLogic is BaseLogic {
         }
 
         require(amount > 0, "Deposit Zero");
+        require(_GPS.getGPArrayLength(_ipToken, _baseToken) <= MAX_GP_NUMBER, "Too Many GP");
         return amount;
     }
 
@@ -71,6 +75,7 @@ contract GPDepositLogic is BaseLogic {
         }
 
         require(amount > 0, "Deposit Zero");
+        require(_GPS.getGPArrayLength(_ipToken, _baseToken) <= MAX_GP_NUMBER, "Too Many GP");
         return amount;
     }
 

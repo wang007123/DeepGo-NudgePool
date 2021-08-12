@@ -12,6 +12,8 @@ contract LPLogic is BaseLogic {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
+    uint256 constant MAX_LP_NUMBER = 1500;
+
     function LPDepositRaising(
         address _ipToken,
         address _baseToken,
@@ -37,6 +39,7 @@ contract LPLogic is BaseLogic {
         }
         
         require(amount > 0, "Deposit Zero");
+        require(_LPS.getLPArrayLength(_ipToken, _baseToken) <= MAX_LP_NUMBER, "Too Many LP");
         return amount;
     }
 
@@ -64,6 +67,7 @@ contract LPLogic is BaseLogic {
         }
 
         require(amount > 0, "Deposit Zero");
+        require(_LPS.getLPArrayLength(_ipToken, _baseToken) <= MAX_LP_NUMBER, "Too Many LP");
         return amount;
     }
 
