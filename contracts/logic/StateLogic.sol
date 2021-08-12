@@ -214,8 +214,7 @@ contract StateLogic is BaseLogic {
             if (expectAmount < amount) {
                 uint256 retAmount = amount.sub(expectAmount);
                 IERC20(_baseToken).safeTransfer(gp, retAmount);
-                _GPS.setGPBaseAmount(_ipToken, _baseToken, gp, expectAmount);
-                _GPS.setGPBaseBalance(_ipToken, _baseToken, gp, expectAmount);
+                _GPS.setGPBaseAmountAndBalance(_ipToken, _baseToken, gp, expectAmount);
                 GPAmount = GPAmount.sub(retAmount);
             }
             resAmount = resAmount.sub(expectAmount);
