@@ -2,7 +2,11 @@
 
 pragma solidity ^0.8.0;
 
+import "../lib/SafeMath.sol";
+
 contract LPStorage {
+    using SafeMath for uint256;
+
     struct LPInfo {
         bool        valid;
         uint256     id; // index in LPA
@@ -13,10 +17,15 @@ contract LPStorage {
 
     struct PoolInfo {
         uint256     curTotalLPAmount; // baseToken unit
+        uint256     liquidationBaseAmount; // baseToken repay to LP
+        uint256     liquidationIPAmount; // IPToken repay to LP
 
         address[]   LPA;
         mapping(address => LPInfo) LPM;
     }
+
+    // For gas optimization
+    uint256 constant NONZERO_INIT = 1;
 
     address public admin;
     address public proxy;
@@ -35,6 +44,35 @@ contract LPStorage {
     function setCurLPAmount(address _ipt, address _bst, uint256 _amount) external {
         require(proxy == msg.sender, "Not Permit");
         pools[_ipt][_bst].curTotalLPAmount = _amount;
+    }
+
+    function setLiquidationBaseAmount(address _ipt, address _bst, uint256 _amount) external {
+        require(proxy == msg.sender, "Not Permit");
+        pools[_ipt][_bst].liquidationBaseAmount = _amount;
+    }
+
+    function setLiquidationIPAmount(address _ipt, address _bst, uint256 _amount) external {
+        require(proxy == msg.sender, "Not Permit");
+        pools[_ipt][_bst].liquidationIPAmount = _amount;
+    }
+
+    function divideVault(address _ipt, address _bst, uint256 _vault) external {
+        require(proxy == msg.sender, "Not Permit");
+
+        uint256 len = pools[_ipt][_bst].LPA.length;
+        uint256 LPAmount = pools[_ipt][_bst].curTotalLPAmount;
+        uint256 resVault = _vault;
+
+        for (uint256 i = 0; i < len; i++) {
+            address lp = pools[_ipt][_bst].LPA[i];
+            uint256 reward = pools[_ipt][_bst].LPM[lp].accVaultReward;
+            uint256 amount = pools[_ipt][_bst].LPM[lp].baseTokensAmount;
+            uint256 curVault = _vault.mul(amount).div(LPAmount);
+
+            resVault -= curVault;
+            curVault = i == len - 1 ? curVault.add(resVault) : curVault;
+            pools[_ipt][_bst].LPM[lp].accVaultReward = reward.add(curVault);
+        }
     }
 
     function setLPBaseAmount(address _ipt, address _bst, address _lp, uint256 _amount) external {
@@ -70,7 +108,7 @@ contract LPStorage {
             pools[_ipt][_bst].LPM[_lp].runningDepositAmount = 0;
         }
         
-        pools[_ipt][_bst].LPM[_lp].accVaultReward = 0;
+        pools[_ipt][_bst].LPM[_lp].accVaultReward = NONZERO_INIT;
     }
 
     function deleteLP(address _ipt, address _bst, address _lp) external {
@@ -94,6 +132,14 @@ contract LPStorage {
         return pools[_ipt][_bst].curTotalLPAmount;
     }
 
+    function getLiquidationBaseAmount(address _ipt, address _bst) external view returns(uint256) {
+        return pools[_ipt][_bst].liquidationBaseAmount;
+    }
+
+    function getLiquidationIPAmount(address _ipt, address _bst) external view returns(uint256) {
+        return pools[_ipt][_bst].liquidationIPAmount;
+    }
+
     function getLPBaseAmount(address _ipt, address _bst, address _lp) external view returns(uint256) {
         require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
         return pools[_ipt][_bst].LPM[_lp].baseTokensAmount;
@@ -106,7 +152,7 @@ contract LPStorage {
 
     function getLPVaultReward(address _ipt, address _bst, address _lp) external view returns(uint256) {
         require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
-        return pools[_ipt][_bst].LPM[_lp].accVaultReward;
+        return pools[_ipt][_bst].LPM[_lp].accVaultReward.sub(NONZERO_INIT);
     }
 
     function getLPValid(address _ipt, address _bst, address _lp) external view returns(bool) {

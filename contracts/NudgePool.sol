@@ -15,17 +15,20 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
     event CreatePool(address _ip, address _ipToken, address _baseToken, uint256 _ipTokensAmount, uint256 _dgtTokensAmount,
                         uint32 _ipImpawnRatio, uint32 _ipCloseLine,uint32 _chargeRatio, uint256 _duration);
     event AuctionPool(address _ip, address _ipToken, address _baseToken, uint256 _ipTokensAmount, uint256 _dgtTokensAmount);
+    event DestroyPool(address _ipToken, address _baseToken);
     event ChangePoolParam(address _ipToken, address _baseToken, uint32 _ipImpawnRatio, uint32 _ipCloseLine,
                    uint32 _chargeRatio, uint256 _duration);
     event RunningIPDeposit(address _ipToken, address _baseToken, uint256 _ipTokensAmount);
-    event RaisingGPDeposit( address _ipToken, address _baseToken, uint256 _baseTokensAmount);
-    event RunningGPDeposit( address _ipToken, address _baseToken, uint256 _baseTokensAmount);
+    event RaisingGPDeposit(address _ipToken, address _baseToken, uint256 _baseTokensAmount);
+    event RunningGPDeposit(address _ipToken, address _baseToken, uint256 _baseTokensAmount);
     event RunningGPDoDeposit(address _ipToken, address _baseToken);
     event RunningGPWithdraw(address _ipToken, address _baseToken, uint256 _baseTokensAmount);
+    event LiquidationGPWithdraw(address _ipToken, address _baseToken);
     event RaisingLPDeposit(address _ipToken, address _baseToken, uint256 _baseTokensAmount);
     event RunningLPDeposit(address _ipToken, address _baseToken, uint256 _baseTokensAmount);
     event RunningLPDoDeposit(address _ipToken, address _baseToken);
     event RunningLPWithdraw(address _ipToken, address _baseToken, uint256 _baseTokensAmount);
+    event LiquidationLPWithdraw(address _ipToken, address _baseToken);
     event WithdrawVault(address _ipToken, address _baseToken, uint256 _baseTokensAmount);
 
     constructor(
@@ -118,6 +121,18 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
             _ip, _ipToken, _baseToken, _ipTokensAmount, _dgtTokensAmount));
         require(status == true, "Auction Pool Failed");
         emit AuctionPool(_ip, _ipToken, _baseToken, _ipTokensAmount, _dgtTokensAmount);
+    }
+
+    function destroyPool(
+        address _ipToken,
+        address _baseToken
+    )
+        external onlyOwner
+    {
+        (bool status,) = curVersion.ipc.delegatecall(abi.encodeWithSelector(bytes4(keccak256(
+            "destroyPool(address,address)")), _ipToken, _baseToken));
+        require(status == true, "Destroy Pool Failed");
+        emit DestroyPool(_ipToken, _baseToken);
     }
 
     function changePoolParam(
@@ -226,6 +241,20 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         return amount;
     }
 
+    function GPWithdrawLiquidation(
+        address _ipToken,
+        address _baseToken
+    )
+        external whenNotPaused
+    {
+        (bool status, bytes memory data) = curVersion.gpwc.delegatecall(
+            abi.encodeWithSelector(bytes4(keccak256(
+            "GPWithdrawLiquidation(address,address)")),
+            _ipToken, _baseToken));
+        require(status == true, "GP Withdraw Failed");
+        emit LiquidationGPWithdraw(_ipToken, _baseToken);
+    }
+
     function LPDepositRaising(
         address _ipToken,
         address _baseToken,
@@ -294,6 +323,20 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
         amount = data.bytesToUint256();
         emit RunningLPWithdraw(_ipToken, _baseToken, _baseTokensAmount);
         return amount;
+    }
+
+    function LPWithdrawLiquidation(
+        address _ipToken,
+        address _baseToken
+    )
+        external whenNotPaused
+    {
+        (bool status, bytes memory data) = curVersion.lpc.delegatecall(
+            abi.encodeWithSelector(bytes4(keccak256(
+            "LPWithdrawLiquidation(address,address)")),
+            _ipToken, _baseToken));
+        require(status == true, "LP Withdraw Failed");
+        emit LiquidationLPWithdraw(_ipToken, _baseToken);
     }
 
     function checkAuctionEnd(

@@ -10,7 +10,8 @@ contract BaseLogic is NPStorage {
         CREATING,
         AUCTING,
         RAISING,
-        RUNNING
+        RUNNING,
+        LIQUIDATION
     }
 
     modifier poolExist(
