@@ -18,6 +18,7 @@ contract NudgePoolStatus {
         CREATING,
         AUCTING,
         RAISING,
+        ALLOCATING,
         RUNNING,
         LIQUIDATION
     }
@@ -242,6 +243,17 @@ contract NudgePoolStatus {
         returns (uint256)
     {
         return _GPS.getGPBaseBalance(_ipToken, _baseToken, _gp);
+    }
+
+    function getOverRaiseAmount(
+        address _ipToken,
+        address _baseToken,
+        address _gp
+    )
+        external view
+        returns (uint256)
+    {
+        return _GPS.getOverRaiseAmount(_ipToken, _baseToken, _gp);
     }
 
     function getGPHoldIPAmount(

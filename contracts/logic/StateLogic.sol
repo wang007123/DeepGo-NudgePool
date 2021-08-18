@@ -127,20 +127,54 @@ contract StateLogic is BaseLogic {
         if (IPAmount.mul(price).div(inUnit).mul(closeLine) <= maxAmount.mul(RATIO_FACTOR)) {
             doRaisingLiquidation(_ipToken, _baseToken);
         } else {
-            GPAmount = allocateGP(_ipToken, _baseToken);
-            // Transit to next stage when raised zero amount.
-            if (GPAmount == 0) {
-                poolTransitNextStage(_ipToken, _baseToken);
-                return;
-            }
-
-            uint256 fee = chargeVaultFee(_ipToken, _baseToken, GPAmount);
-            uint256 raiseLP = raiseFromLP(_ipToken, _baseToken, GPAmount.sub(fee));
-            uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
-                                            GPAmount.add(raiseLP).sub(fee));
-            _GPS.setCurIPAmount(_ipToken, _baseToken, swappedIP);
-            _GPS.allocateFunds(_ipToken, _baseToken);
+            allocateGP(_ipToken, _baseToken);
             poolTransitNextStage(_ipToken, _baseToken);
+        }
+    }
+
+    function allocateFundRaising(
+        address _ipToken,
+        address _baseToken
+    )
+        external
+        lockPool(_ipToken, _baseToken)
+        returns(bool)
+    {
+        poolAtStage(_ipToken, _baseToken, Stages.ALLOCATING);
+        uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
+        // Transit to next stage when raised zero amount.
+        if (GPAmount == 0) {
+            poolTransitNextStage(_ipToken, _baseToken);
+            return true;
+        }
+        uint256 fee = chargeVaultFee(_ipToken, _baseToken, GPAmount);
+        uint256 raiseLP = raiseFromLP(_ipToken, _baseToken, GPAmount.sub(fee));
+        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
+                                        GPAmount.add(raiseLP).sub(fee));
+        _GPS.setCurIPAmount(_ipToken, _baseToken, swappedIP);
+        _GPS.allocateFunds(_ipToken, _baseToken);
+
+        poolTransitNextStage(_ipToken, _baseToken);
+        return true;
+    }
+
+    function repayGPOverRaise(
+        address _ipToken,
+        address _baseToken
+    )
+        external
+        lockPool(_ipToken, _baseToken)
+    {
+        uint256 len = _GPS.getGPArrayLength(_ipToken, _baseToken);
+
+        for (uint i = len; i > 0; i--) {
+            address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i - 1);
+            uint256 repayAmount = _GPS.getOverRaiseAmount(_ipToken, _baseToken, gp);
+
+            if (repayAmount > 0) {
+                IERC20(_baseToken).safeTransfer(gp, repayAmount);
+                _GPS.setOverRaiseAmount(_ipToken, _baseToken, gp, 0);
+            }
         }
     }
 
@@ -171,14 +205,12 @@ contract StateLogic is BaseLogic {
         address _baseToken
     )
         private
-        returns (uint256 amount)
     {
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
         uint256 maxAmount = updateMaxIPCanRaise(_ipToken, _baseToken);
 
         if (GPAmount <= maxAmount) {
-            amount = GPAmount;
-            return amount;
+            return;
         }
 
         uint256 totalWeight = 0;
@@ -186,7 +218,7 @@ contract StateLogic is BaseLogic {
         GPAlloc[] memory helpArr = new GPAlloc[](len);
         for (uint256 i = 0; i < len; i++) {
             address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i);
-            amount = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
+            uint256 amount = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
             helpArr[i].gp = gp;
             helpArr[i].weight = IERC20(DGTToken).balanceOf(gp).add(1 ether).mul(amount.sqrt());
             totalWeight = totalWeight.add(helpArr[i].weight);
@@ -209,12 +241,11 @@ contract StateLogic is BaseLogic {
         for (uint256 i = 0; i < len; i++) {
             address gp = helpArr[i].gp;
             uint256 expectAmount = resAmount.mul(helpArr[i].weight).div(totalWeight);
-            amount = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
+            uint256 amount = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
             expectAmount = expectAmount > amount ? amount : expectAmount;
             if (expectAmount < amount) {
                 uint256 retAmount = amount.sub(expectAmount);
-                IERC20(_baseToken).safeTransfer(gp, retAmount);
-                _GPS.setGPBaseAmountAndBalance(_ipToken, _baseToken, gp, expectAmount);
+                _GPS.setGPAmount(_ipToken, _baseToken, gp, expectAmount, retAmount);
                 GPAmount = GPAmount.sub(retAmount);
             }
             resAmount = resAmount.sub(expectAmount);
@@ -223,8 +254,6 @@ contract StateLogic is BaseLogic {
 
         _GPS.setCurGPAmount(_ipToken, _baseToken, GPAmount);
         _GPS.setCurGPBalance(_ipToken, _baseToken, GPAmount);
-        amount = GPAmount;
-        return amount;
     }
 
     function chargeVaultFee(

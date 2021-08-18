@@ -15,6 +15,8 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
     event CreatePool(address _ip, address _ipToken, address _baseToken, uint256 _ipTokensAmount, uint256 _dgtTokensAmount,
                         uint32 _ipImpawnRatio, uint32 _ipCloseLine,uint32 _chargeRatio, uint256 _duration);
     event AuctionPool(address _ip, address _ipToken, address _baseToken, uint256 _ipTokensAmount, uint256 _dgtTokensAmount);
+    event AllocateFundRaising(address _ipToken, address _baseToken);
+    event RepayGPOverRaise(address _ipToken, address _baseToken);
     event DestroyPool(address _ipToken, address _baseToken);
     event ChangePoolParam(address _ipToken, address _baseToken, uint32 _ipImpawnRatio, uint32 _ipCloseLine,
                    uint32 _chargeRatio, uint256 _duration);
@@ -365,6 +367,35 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
             "checkRaisingEnd(address,address)")), _ipToken, _baseToken));
         require(status == true, "Check Failed");
         return data.bytesToBool();
+    }
+
+    function allocateFundRaising(
+        address _ipToken,
+        address _baseToken
+    )
+        external whenNotPaused
+        returns (bool)
+    {
+        (bool status, bytes memory data) = curVersion.stc.delegatecall(
+            abi.encodeWithSelector(bytes4(keccak256(
+            "allocateFundRaising(address,address)")), _ipToken, _baseToken));
+        require(status == true, "Allocate Failed");
+        emit AllocateFundRaising(_ipToken, _baseToken);
+        return data.bytesToBool();
+    }
+
+    function repayGPOverRaise(
+        address _ipToken,
+        address _baseToken
+    )
+        external whenNotPaused
+        returns (bool)
+    {
+        (bool status, bytes memory data) = curVersion.stc.delegatecall(
+            abi.encodeWithSelector(bytes4(keccak256(
+            "repayGPOverRaise(address,address)")), _ipToken, _baseToken));
+        require(status == true, "Repay Failed");
+        emit RepayGPOverRaise(_ipToken, _baseToken);
     }
 
     function checkRunningEnd(

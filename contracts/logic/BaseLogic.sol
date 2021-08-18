@@ -10,6 +10,7 @@ contract BaseLogic is NPStorage {
         CREATING,
         AUCTING,
         RAISING,
+        ALLOCATING,
         RUNNING,
         LIQUIDATION
     }

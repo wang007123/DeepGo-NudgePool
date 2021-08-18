@@ -2,10 +2,13 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../lib/SafeMath.sol";
 
 contract GPStorage {
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     // For gas optimization
     uint256 constant NONZERO_INIT = 1;
@@ -18,6 +21,7 @@ contract GPStorage {
         uint256     runningDepositAmount;
         uint256     ipTokensAmount; // ipToken unit, include GP and LP
         uint256     raisedFromLPAmount; // baseToken unit
+        uint256     overRaiseAmount;    //baseToken repay to GP after raising end
     }
 
     struct PoolInfo {
@@ -106,11 +110,18 @@ contract GPStorage {
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = _amount;
     }
 
-    function setGPBaseAmountAndBalance(address _ipt, address _bst, address _gp, uint256 _amount) external {
+    function setGPAmount(address _ipt, address _bst, address _gp, uint256 _amount, uint256 _retAmount) external {
         require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].baseTokensAmount = _amount;
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = _amount;
+        pools[_ipt][_bst].GPM[_gp].overRaiseAmount = NONZERO_INIT.add(_retAmount);
+    }
+
+    function setOverRaiseAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
+        require(proxy == msg.sender, "Not Permit");
+        require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
+        pools[_ipt][_bst].GPM[_gp].overRaiseAmount = NONZERO_INIT.add(_amount);
     }
 
     function insertGP(address _ipt, address _bst, address _gp, uint256 _amount, bool running) external {
@@ -130,6 +141,7 @@ contract GPStorage {
 
         pools[_ipt][_bst].GPM[_gp].ipTokensAmount = NONZERO_INIT;
         pools[_ipt][_bst].GPM[_gp].raisedFromLPAmount = NONZERO_INIT;
+        pools[_ipt][_bst].GPM[_gp].overRaiseAmount = NONZERO_INIT;
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = 0;
     }
 
@@ -149,6 +161,7 @@ contract GPStorage {
         pools[_ipt][_bst].GPM[_gp].runningDepositAmount = 0;
         pools[_ipt][_bst].GPM[_gp].ipTokensAmount = 0;
         pools[_ipt][_bst].GPM[_gp].raisedFromLPAmount = 0;
+        pools[_ipt][_bst].GPM[_gp].overRaiseAmount = 0;
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = 0;
     }
 
@@ -199,6 +212,11 @@ contract GPStorage {
     function getGPBaseBalance(address _ipt, address _bst, address _gp) external view returns(uint256) {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         return pools[_ipt][_bst].GPM[_gp].baseTokensBalance;
+    }
+
+    function getOverRaiseAmount(address _ipt, address _bst, address _gp) external view returns(uint256) {
+        require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
+        return pools[_ipt][_bst].GPM[_gp].overRaiseAmount.sub(NONZERO_INIT);
     }
 
     function getGPValid(address _ipt, address _bst, address _gp) external view returns(bool) {
