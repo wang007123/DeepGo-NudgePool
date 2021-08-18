@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./lib/SafeMath.sol";
+import "./lib/NPSwap.sol";
 import "./storage/IPStorage.sol";
 import "./storage/GPStorage.sol";
 import "./storage/VaultStorage.sol";
@@ -436,5 +437,89 @@ contract NudgePoolStatus {
         values[uint256(Keys.IPWithdrawedVault)] = _VTS.getIPWithdrawed(_ipToken, _baseToken);
 
         return (keys, values);
+    }
+    
+    function getLPAsset(
+        address _ipToken,
+        address _baseToken,
+        address _lp
+    ) 
+        external view 
+        returns (uint256 ipAsset, uint256 baseAsset)
+    {
+        require(_IPS.getPoolValid(_ipToken, _baseToken) == true, "NudgePool Not Exist");
+        
+        if (_LPS.getLPValid(_ipToken, _baseToken, _lp) == false) {
+            return (ipAsset, baseAsset);
+        }
+
+        uint8 stage = _IPS.getPoolStage(_ipToken, _baseToken);
+        uint256 LPBaseAmount = _LPS.getLPBaseAmount(_ipToken, _baseToken, _lp);
+        uint256 vaultReward = _LPS.getLPVaultReward(_ipToken, _baseToken, _lp);
+        
+        if (stage == uint8(Stages.RAISING)) {
+            baseAsset = LPBaseAmount;
+        } else if (stage == uint8(Stages.RUNNING)) {
+            uint256 fee = LPBaseAmount.mul(1).div(100);
+            baseAsset = LPBaseAmount.add(vaultReward).sub(fee);
+
+        } else if (stage == uint8(Stages.LIQUIDATION)) {
+            uint256 totalIPAmount = _LPS.getLiquidationIPAmount(_ipToken, _baseToken);
+            uint256 totalBaseAmount =  _LPS.getLiquidationBaseAmount(_ipToken, _baseToken);
+            uint256 totalLPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
+
+            if (totalIPAmount > 0) {
+                ipAsset = totalIPAmount.mul(LPBaseAmount).div(totalLPAmount);
+            }
+
+            if (totalBaseAmount > 0) {
+                baseAsset = vaultReward.add(totalBaseAmount.mul(LPBaseAmount).div(totalLPAmount));
+            }
+        }
+    }
+
+    function getGPAsset(
+        address _ipToken,
+        address _baseToken,
+        address _gp
+    ) 
+        external view 
+        returns (uint256 ipAsset, uint256 baseAsset)
+    {
+        require(_IPS.getPoolValid(_ipToken, _baseToken) == true, "NudgePool Not Exist");
+        
+        if (_GPS.getGPValid(_ipToken, _baseToken, _gp) == false) {
+            return (ipAsset, baseAsset);
+        }
+        
+        uint8 stage = _IPS.getPoolStage(_ipToken, _baseToken);
+        
+        if (stage == uint8(Stages.RAISING)) {
+            baseAsset = _GPS.getGPBaseBalance(_ipToken, _baseToken, _gp);
+        } else if (stage == uint8(Stages.RUNNING)) {
+            uint256 belongLP = _GPS.getGPRaiseLPAmount(_ipToken, _baseToken, _gp);
+            uint256 IPAmount = _GPS.getGPHoldIPAmount(_ipToken, _baseToken, _gp);
+            uint256 swappedBase = NPSwap.getAmountOut(_ipToken, _baseToken, IPAmount);
+            baseAsset = swappedBase > belongLP ? swappedBase.sub(belongLP) : 0;
+            uint256 GPBase = _GPS.getGPBaseAmount(_ipToken, _baseToken, _gp);
+            uint256 earnedGP = baseAsset > GPBase ? baseAsset.sub(GPBase) : 0;
+
+            if (earnedGP > 0) {
+                baseAsset = baseAsset.sub(earnedGP.mul(20).div(100));
+            }
+        } else if (stage == uint8(Stages.LIQUIDATION)) {
+            uint256 totalIPAmount = _GPS.getLiquidationIPAmount(_ipToken, _baseToken);
+            uint256 totalBaseAmount =  _GPS.getLiquidationBaseAmount(_ipToken, _baseToken);
+            uint256 totalBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
+            uint256 balance = _GPS.getGPBaseBalance(_ipToken, _baseToken, _gp);
+
+            if (totalIPAmount > 0) {
+                ipAsset = totalIPAmount.mul(balance).div(totalBalance);
+            }
+
+            if (totalBaseAmount > 0) {
+                baseAsset = totalBaseAmount.mul(balance).div(totalBalance);
+            }
+        }
     }
 }
