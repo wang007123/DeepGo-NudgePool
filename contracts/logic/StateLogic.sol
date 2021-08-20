@@ -132,20 +132,19 @@ contract StateLogic is BaseLogic {
         }
     }
 
-    function allocateFundRaising(
+    function allocateFundraising(
         address _ipToken,
         address _baseToken
     )
         external
         lockPool(_ipToken, _baseToken)
-        returns(bool)
     {
         poolAtStage(_ipToken, _baseToken, Stages.ALLOCATING);
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
         // Transit to next stage when raised zero amount.
         if (GPAmount == 0) {
             poolTransitNextStage(_ipToken, _baseToken);
-            return true;
+            return;
         }
         uint256 fee = chargeVaultFee(_ipToken, _baseToken, GPAmount);
         uint256 raiseLP = raiseFromLP(_ipToken, _baseToken, GPAmount.sub(fee));
@@ -153,28 +152,27 @@ contract StateLogic is BaseLogic {
                                         GPAmount.add(raiseLP).sub(fee));
         _GPS.setCurIPAmount(_ipToken, _baseToken, swappedIP);
         _GPS.allocateFunds(_ipToken, _baseToken);
+        repayGPOverRaise(_ipToken, _baseToken);
 
         poolTransitNextStage(_ipToken, _baseToken);
-        return true;
     }
 
     function repayGPOverRaise(
         address _ipToken,
         address _baseToken
     )
-        external
-        lockPool(_ipToken, _baseToken)
+        private
     {
         uint256 len = _GPS.getGPArrayLength(_ipToken, _baseToken);
 
         for (uint i = len; i > 0; i--) {
             address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i - 1);
-            uint256 repayAmount = _GPS.getOverRaiseAmount(_ipToken, _baseToken, gp);
+            uint256 repayAmount = _GPS.getOverRaisedAmount(_ipToken, _baseToken, gp);
 
             if (repayAmount > 0) {
                 IERC20(_baseToken).safeTransfer(gp, repayAmount);
-                _GPS.setOverRaiseAmount(_ipToken, _baseToken, gp, 0);
             }
+            _GPS.setOverRaisedAmount(_ipToken, _baseToken, gp, 0);
         }
     }
 
@@ -244,9 +242,9 @@ contract StateLogic is BaseLogic {
             uint256 amount = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
             expectAmount = expectAmount > amount ? amount : expectAmount;
             if (expectAmount < amount) {
-                uint256 retAmount = amount.sub(expectAmount);
-                _GPS.setGPAmount(_ipToken, _baseToken, gp, expectAmount, retAmount);
-                GPAmount = GPAmount.sub(retAmount);
+                uint256 overRaisedAmount = amount.sub(expectAmount);
+                _GPS.setGPAmount(_ipToken, _baseToken, gp, expectAmount, expectAmount, overRaisedAmount);
+                GPAmount = GPAmount.sub(overRaisedAmount);
             }
             resAmount = resAmount.sub(expectAmount);
             totalWeight = totalWeight.sub(helpArr[i].weight);

@@ -245,7 +245,7 @@ contract NudgePoolStatus {
         return _GPS.getGPBaseBalance(_ipToken, _baseToken, _gp);
     }
 
-    function getOverRaiseAmount(
+    function getOverRaisedAmount(
         address _ipToken,
         address _baseToken,
         address _gp
@@ -253,7 +253,7 @@ contract NudgePoolStatus {
         external view
         returns (uint256)
     {
-        return _GPS.getOverRaiseAmount(_ipToken, _baseToken, _gp);
+        return _GPS.getOverRaisedAmount(_ipToken, _baseToken, _gp);
     }
 
     function getGPHoldIPAmount(
