@@ -13,6 +13,7 @@ contract GPDepositLogic is BaseLogic {
     using SafeERC20 for IERC20;
 
     uint256 constant MAX_GP_NUMBER = 500;
+    uint256 constant NONZERO_INIT = 1;
 
     function GPDepositRaising(
         address _ipToken,

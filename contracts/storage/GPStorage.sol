@@ -18,6 +18,7 @@ contract GPStorage {
         uint256     runningDepositAmount;
         uint256     ipTokensAmount; // ipToken unit, include GP and LP
         uint256     raisedFromLPAmount; // baseToken unit
+        uint256     overRaisedAmount;    //baseToken repay to GP after raising end
     }
 
     struct PoolInfo {
@@ -106,11 +107,18 @@ contract GPStorage {
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = _amount;
     }
 
-    function setGPBaseAmountAndBalance(address _ipt, address _bst, address _gp, uint256 _amount) external {
+    function setGPAmount(address _ipt, address _bst, address _gp, uint256 _baseAmount, uint256 _baseBalance, uint256 _overRaisedAmount) external {
         require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
-        pools[_ipt][_bst].GPM[_gp].baseTokensAmount = _amount;
-        pools[_ipt][_bst].GPM[_gp].baseTokensBalance = _amount;
+        pools[_ipt][_bst].GPM[_gp].baseTokensAmount = _baseAmount;
+        pools[_ipt][_bst].GPM[_gp].baseTokensBalance = _baseBalance;
+        pools[_ipt][_bst].GPM[_gp].overRaisedAmount = NONZERO_INIT.add(_overRaisedAmount);
+    }
+
+    function setOverRaisedAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
+        require(proxy == msg.sender, "Not Permit");
+        require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
+        pools[_ipt][_bst].GPM[_gp].overRaisedAmount = _amount;
     }
 
     function insertGP(address _ipt, address _bst, address _gp, uint256 _amount, bool running) external {
@@ -130,6 +138,7 @@ contract GPStorage {
 
         pools[_ipt][_bst].GPM[_gp].ipTokensAmount = NONZERO_INIT;
         pools[_ipt][_bst].GPM[_gp].raisedFromLPAmount = NONZERO_INIT;
+        pools[_ipt][_bst].GPM[_gp].overRaisedAmount = NONZERO_INIT;
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = 0;
     }
 
@@ -149,6 +158,7 @@ contract GPStorage {
         pools[_ipt][_bst].GPM[_gp].runningDepositAmount = 0;
         pools[_ipt][_bst].GPM[_gp].ipTokensAmount = 0;
         pools[_ipt][_bst].GPM[_gp].raisedFromLPAmount = 0;
+        pools[_ipt][_bst].GPM[_gp].overRaisedAmount = 0;
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = 0;
     }
 
@@ -199,6 +209,15 @@ contract GPStorage {
     function getGPBaseBalance(address _ipt, address _bst, address _gp) external view returns(uint256) {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         return pools[_ipt][_bst].GPM[_gp].baseTokensBalance;
+    }
+
+    function getOverRaisedAmount(address _ipt, address _bst, address _gp) external view returns(uint256) {
+        require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
+        if (pools[_ipt][_bst].GPM[_gp].overRaisedAmount == 0) {
+            return 0;
+        } else {
+            return pools[_ipt][_bst].GPM[_gp].overRaisedAmount.sub(NONZERO_INIT);
+        }
     }
 
     function getGPValid(address _ipt, address _bst, address _gp) external view returns(bool) {

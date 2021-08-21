@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 
 library NPSwap {
-     using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20;
 
     function getAmountOut(
         address inToken,
