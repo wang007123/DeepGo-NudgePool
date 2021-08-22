@@ -248,7 +248,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
     )
         external whenNotPaused
     {
-        (bool status, bytes memory data) = curVersion.gpwc.delegatecall(
+        (bool status,) = curVersion.gpwc.delegatecall(
             abi.encodeWithSelector(bytes4(keccak256(
             "GPWithdrawLiquidation(address,address)")),
             _ipToken, _baseToken));
@@ -332,7 +332,7 @@ contract NudgePool is NPStorage, NPProxy, Pausable {
     )
         external whenNotPaused
     {
-        (bool status, bytes memory data) = curVersion.lpc.delegatecall(
+        (bool status,) = curVersion.lpc.delegatecall(
             abi.encodeWithSelector(bytes4(keccak256(
             "LPWithdrawLiquidation(address,address)")),
             _ipToken, _baseToken));
