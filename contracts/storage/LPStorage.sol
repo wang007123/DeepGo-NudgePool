@@ -90,7 +90,7 @@ contract LPStorage {
     function setLPVaultReward(address _ipt, address _bst, address _lp, uint256 _amount) external {
         require(proxy == msg.sender, "Not Permit");
         require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
-        pools[_ipt][_bst].LPM[_lp].accVaultReward = _amount;
+        pools[_ipt][_bst].LPM[_lp].accVaultReward = NONZERO_INIT.add(_amount);
     }
 
     function insertLP(address _ipt, address _bst, address _lp, uint256 _amount, bool running) external {

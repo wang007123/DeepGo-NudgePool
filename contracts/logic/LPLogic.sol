@@ -129,7 +129,6 @@ contract LPLogic is BaseLogic {
         address _baseToken
     )
         external
-        returns (uint256 amount)
     {
         poolAtStage(_ipToken, _baseToken, Stages.LIQUIDATION);
 
