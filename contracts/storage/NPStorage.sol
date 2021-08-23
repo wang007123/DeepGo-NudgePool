@@ -32,6 +32,7 @@ contract NPStorage is Ownable {
     event SetMinRatio(uint32 _MinRatio);
     event SetAlpha(uint32 _Alpha);
     event SetRaiseRatio(uint32 _RaiseRatio);
+    event SetRaiseLPLossRatio(uint32 _RaiseLPLossRatio);
     event SetDuration(uint256 _AuctionDuration, uint256 _RaisingDuration, uint256 _MinimumDuration);
 
     function setMinRatio(uint32 _minRatio) external onlyOwner {
@@ -47,6 +48,11 @@ contract NPStorage is Ownable {
     function setRaiseRatio(uint32 _raiseRatio) external onlyOwner {
         raiseRatio = _raiseRatio;
         emit SetRaiseRatio(raiseRatio);
+    }
+
+    function setRaiseLPLossRatio(uint32 _raiseLPLossRatio) external onlyOwner {
+        raiseLPLossRatio = _raiseLPLossRatio;
+        emit SetRaiseLPLossRatio(raiseLPLossRatio);
     }
 
     function setDuration(uint256 _auction, uint256 _raising, uint256 _duration) external onlyOwner {
