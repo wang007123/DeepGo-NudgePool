@@ -56,7 +56,8 @@ contract LiquidationLogic is BaseLogic {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
         uint256 inUnit = 10**ERC20(_ipToken).decimals();
         uint256 price = NPSwap.getAmountOut(_ipToken, _baseToken, inUnit);
-        uint256 IPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
+        uint256 IPAmount = _IPS.getIPTokensAmount(_ipToken, _baseToken);
+        uint256 curIPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
         uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
         uint32 closeLine = _IPS.getIPCloseLine(_ipToken, _baseToken);
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
@@ -64,7 +65,7 @@ contract LiquidationLogic is BaseLogic {
         // Only do GP liquidation when IP did not reach the closeline
         if (IPAmount.mul(price).div(inUnit).mul(closeLine) <= GPAmount.mul(RATIO_FACTOR)) {
             return false;
-        } else if (IPAmount.mul(price).div(inUnit) <= raiseLP) {
+        } else if (curIPAmount.mul(price).div(inUnit) <= raiseLP) {
             doGPLiquidation(_ipToken, _baseToken);
             return true;
         }
