@@ -50,6 +50,7 @@ contract NPProxy is Ownable {
                 _lpc != address(0) && _vtc != address(0) && _stc != address(0) &&
                 _lqdc != address(0), "Wrong Address");
         require(bytes(_newVersion).length > 0, "Empty Version");
+        require(keccak256(abi.encodePacked(versionName)) != keccak256(abi.encodePacked(_newVersion)), "Existing Version");
         delayVersionName = _newVersion;
         delayVersion.ipc = _ipc;
         delayVersion.gpdc = _gpdc;
