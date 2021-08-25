@@ -35,7 +35,7 @@ contract LiquidationLogic is BaseLogic {
         if (closeLineAmount <= GPAmount) {
             // Check the situation of GP liquidation and the lowest swap boundary
             if (curIPAmount.mul(price).div(inUnit) <= raiseLP &&
-                IPAmount.add(curIPAmount).mul(price).mul(RATIO_FACTOR).div(inUnit) <= raiseLP.mul(raiseLPLossRatio)) {
+                IPAmount.add(curIPAmount).mul(price).mul(RATIO_FACTOR).div(inUnit) <= raiseLP.mul(swapBoundaryRatio)) {
                 doIPLiquidation(_ipToken, _baseToken, true);
             } else {
                 doIPLiquidation(_ipToken, _baseToken, false);
@@ -113,7 +113,7 @@ contract LiquidationLogic is BaseLogic {
         uint256 requireIP = NPSwap.getAmountIn(_ipToken, _baseToken, raiseLP);
         requireIP = requireIP > IPAmount ? IPAmount : requireIP;
         if (requireIP > 0 && !_raiseLPLoss) {
-            belongLP = NPSwap.swap(_ipToken, _baseToken, requireIP);
+            belongLP = safeSwap(_ipToken, _baseToken, requireIP);
         }
 
         belongGP = IPAmount.sub(requireIP);
@@ -148,6 +148,7 @@ contract LiquidationLogic is BaseLogic {
 
         if (IPAmount > 0) {
             belongLP= NPSwap.swap(_ipToken, _baseToken, IPAmount);
+            belongLP= safeSwap(_ipToken, _baseToken, IPAmount);
         }
 
         belongLP = belongLP.add(LPBase.sub(raiseLP));
@@ -173,7 +174,7 @@ contract LiquidationLogic is BaseLogic {
         uint256 belongGP = 0;
 
         if (IPAmount > 0 ) {
-            swappedBase = NPSwap.swap(_ipToken, _baseToken, IPAmount);
+            swappedBase = safeSwap(_ipToken, _baseToken, IPAmount);
         }
 
         belongLP = swappedBase > raiseLP ? raiseLP : swappedBase;

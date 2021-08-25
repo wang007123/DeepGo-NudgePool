@@ -176,7 +176,7 @@ contract LPLogic is BaseLogic {
         lend = GPBalance.mul(raiseRatio + RATIO_FACTOR).div(RATIO_FACTOR).sub(balance);
         lend = lend > _amount ? _amount : lend;
 
-        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken, lend);
+        uint256 swappedIP = safeSwap(_baseToken, _ipToken, lend);
         _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, raiseLP.add(lend));
         _GPS.setCurIPAmount(_ipToken, _baseToken, IPAmount.add(swappedIP));
         _GPS.allocateFunds(_ipToken, _baseToken);
@@ -216,7 +216,7 @@ contract LPLogic is BaseLogic {
         }
 
         uint256 swappedIP = expect.mul(inUnit).div(price);
-        uint256 real = NPSwap.swap(_ipToken, _baseToken, swappedIP);
+        uint256 real = safeSwap(_ipToken, _baseToken, swappedIP);
         _GPS.setCurIPAmount(_ipToken, _baseToken, IPAmount.sub(swappedIP));
         _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, curRaiseLP.sub(expect));
         _LPS.setCurLPAmount(_ipToken, _baseToken, LPAmount.sub(_amount));

@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/Safety.sol";
-import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract GPWithdrawLogic is BaseLogic {
@@ -27,7 +26,8 @@ contract GPWithdrawLogic is BaseLogic {
         // Withdraw all base token, ignore input amount
         uint256 belongLP = _GPS.getGPRaiseLPAmount(_ipToken, _baseToken, _gp);
         uint256 IPAmount = _GPS.getGPHoldIPAmount(_ipToken, _baseToken, _gp);
-        uint256 swappedBase = NPSwap.swap(_ipToken, _baseToken, IPAmount);
+        uint256 swappedBase = safeSwap(_ipToken, _baseToken, IPAmount);
+
         amount = swappedBase > belongLP ? swappedBase.sub(belongLP) : 0;
         uint256 GPBase = _GPS.getGPBaseAmount(_ipToken, _baseToken, _gp);
         uint256 earnedGP = amount > GPBase ? amount.sub(GPBase) : 0;

@@ -149,7 +149,7 @@ contract StateLogic is BaseLogic {
         }
         uint256 fee = chargeVaultFee(_ipToken, _baseToken, GPAmount);
         uint256 raiseLP = raiseFromLP(_ipToken, _baseToken, GPAmount.sub(fee));
-        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
+        uint256 swappedIP = safeSwap(_baseToken, _ipToken,
                                         GPAmount.add(raiseLP).sub(fee));
         _GPS.setCurIPAmount(_ipToken, _baseToken, swappedIP);
         _GPS.allocateFunds(_ipToken, _baseToken);

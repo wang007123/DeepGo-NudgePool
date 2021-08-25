@@ -15,7 +15,7 @@ contract NPStorage is Ownable {
     uint32 public alpha = 0;
     uint32 public raiseRatio = uint32(RATIO_FACTOR * 1);
     // Lowest swap boundary
-    uint32 public raiseLPLossRatio = 800000;
+    uint32 public swapBoundaryRatio = 800000;
 
     uint256 public auctionDuration = 7 days;
     uint256 public raisingDuration = 3 days;
@@ -32,7 +32,7 @@ contract NPStorage is Ownable {
     event SetMinRatio(uint32 _MinRatio);
     event SetAlpha(uint32 _Alpha);
     event SetRaiseRatio(uint32 _RaiseRatio);
-    event SetRaiseLPLossRatio(uint32 _RaiseLPLossRatio);
+    event SetSwapBoundaryRatio(uint32 _swapBoundaryRatio);
     event SetDuration(uint256 _AuctionDuration, uint256 _RaisingDuration, uint256 _MinimumDuration);
 
     function setMinRatio(uint32 _minRatio) external onlyOwner {
@@ -50,9 +50,9 @@ contract NPStorage is Ownable {
         emit SetRaiseRatio(raiseRatio);
     }
 
-    function setRaiseLPLossRatio(uint32 _raiseLPLossRatio) external onlyOwner {
-        raiseLPLossRatio = _raiseLPLossRatio;
-        emit SetRaiseLPLossRatio(raiseLPLossRatio);
+    function setSwapBoundaryRatio(uint32 _swapBoundaryRatio) external onlyOwner {
+        swapBoundaryRatio = _swapBoundaryRatio;
+        emit SetSwapBoundaryRatio(swapBoundaryRatio);
     }
 
     function setDuration(uint256 _auction, uint256 _raising, uint256 _duration) external onlyOwner {

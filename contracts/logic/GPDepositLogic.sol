@@ -108,9 +108,8 @@ contract GPDepositLogic is BaseLogic {
         _GPS.setGPBaseBalance(_ipToken, _baseToken, _gp, oriBalance.add(_amount));
         oriBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
         _GPS.setCurGPBalance(_ipToken, _baseToken, oriBalance.add(_amount));
-        
-        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
-                                           _amount.add(raiseLP));
+        uint256 swappedIP = safeSwap(_baseToken, _ipToken, _amount.add(raiseLP));
+
         oriBalance = _GPS.getCurIPAmount(_ipToken, _baseToken);
         _GPS.setCurIPAmount(_ipToken, _baseToken, oriBalance.add(swappedIP));
         _GPS.allocateFunds(_ipToken, _baseToken);
