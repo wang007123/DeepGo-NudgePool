@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "./lib/Ownable.sol";
+import "./lib/Authority.sol";
 import "./lib/SafeMath.sol";
 
-contract NPProxy is Ownable {
+contract NPProxy is Authority {
     using SafeMath for uint256;
 
     struct LogicContracts {
@@ -24,7 +24,7 @@ contract NPProxy is Ownable {
     string[] public versionList;
     string public versionName;
     string public delayVersionName;
-    uint256 constant delayTime = 5 minutes;
+    uint256 constant delayTime = 24 hours;
     uint256 public startTime;
     bool public initialized;
 
