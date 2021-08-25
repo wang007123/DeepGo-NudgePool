@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 
 contract GPStorage {
-    using SafeMath for uint256;
+    using Safety for uint256;
 
     // For gas optimization
     uint256 constant NONZERO_INIT = 1;

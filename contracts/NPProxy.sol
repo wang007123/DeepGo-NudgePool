@@ -3,10 +3,10 @@
 pragma solidity ^0.8.0;
 
 import "./lib/Ownable.sol";
-import "./lib/SafeMath.sol";
+import "./lib/Safety.sol";
 
 contract NPProxy is Ownable {
-    using SafeMath for uint256;
+    using Safety for uint256;
 
     struct LogicContracts {
         address ipc;

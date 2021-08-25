@@ -3,12 +3,12 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract GPWithdrawLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for uint256;
     using SafeERC20 for IERC20;
 
     function GPWithdrawRunning(

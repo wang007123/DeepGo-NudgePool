@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract LPLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for uint256;
     using SafeERC20 for IERC20;
 
     uint256 constant MAX_LP_NUMBER = 1500;

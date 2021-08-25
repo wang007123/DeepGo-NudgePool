@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./lib/SafeMath.sol";
+import "./lib/Safety.sol";
 import "./lib/NPSwap.sol";
 import "./storage/IPStorage.sol";
 import "./storage/GPStorage.sol";
@@ -11,7 +11,7 @@ import "./storage/LPStorage.sol";
 import "./NudgePool.sol";
 
 contract NudgePoolStatus {
-    using SafeMath for uint256;
+    using Safety for uint256;
 
     // Keep consistent with Stages in BaseLogic.sol
     enum Stages {

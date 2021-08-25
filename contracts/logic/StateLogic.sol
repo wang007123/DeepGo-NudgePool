@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract StateLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for *;
     using SafeERC20 for IERC20;
 
     struct GPAlloc {
@@ -46,6 +46,7 @@ contract StateLogic is BaseLogic {
         returns (bool)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RAISING);
+        require(!msg.sender.isContract(), "Not support contract");
 
         uint256 time = _IPS.getPoolAuctionEndTime(_ipToken, _baseToken);
         if (block.timestamp < time.add(raisingDuration)) {

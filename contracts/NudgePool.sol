@@ -4,13 +4,13 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "./lib/BytesUtils.sol";
-import "./lib/SafeMath.sol";
+import "./lib/Safety.sol";
 import "./storage/NPStorage.sol";
 import "./NPProxy.sol";
 
 contract NudgePool is NPStorage, NPProxy, Pausable {
     using BytesUtils for bytes;
-    using SafeMath for uint256;
+    using Safety for uint256;
 
     event CreatePool(address _ip, address _ipToken, address _baseToken, uint256 _ipTokensAmount, uint256 _dgtTokensAmount,
                         uint32 _ipImpawnRatio, uint32 _ipCloseLine,uint32 _chargeRatio, uint256 _duration);
