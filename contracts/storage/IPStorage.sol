@@ -54,7 +54,7 @@ contract IPStorage {
 
     function insertPool(address _ipt, address _bst) external {
         require(proxy == msg.sender, "Not Permit");
-        require(pools[_ipt][_bst].valid == false, "Pool Already Exist");
+        require(!pools[_ipt][_bst].valid, "Pool Already Exist");
 
         poolsArray.push(Pool(_ipt, _bst));
         pools[_ipt][_bst].valid = true;
@@ -65,7 +65,7 @@ contract IPStorage {
 
     function deletePool(address _ipt, address _bst) external {
         require(proxy == msg.sender, "Not Permit");
-        require(pools[_ipt][_bst].valid == true, "Pool Not Exist");
+        require(pools[_ipt][_bst].valid, "Pool Not Exist");
         uint256 id = pools[_ipt][_bst].id;
         uint256 length = poolsArray.length;
 

@@ -459,9 +459,9 @@ contract NudgePoolStatus {
         external view 
         returns (uint256 ipAsset, uint256 baseAsset)
     {
-        require(_IPS.getPoolValid(_ipToken, _baseToken) == true, "NudgePool Not Exist");
+        require(_IPS.getPoolValid(_ipToken, _baseToken), "NudgePool Not Exist");
         
-        if (_LPS.getLPValid(_ipToken, _baseToken, _lp) == false) {
+        if (!_LPS.getLPValid(_ipToken, _baseToken, _lp)) {
             return (ipAsset, baseAsset);
         }
 
@@ -498,9 +498,9 @@ contract NudgePoolStatus {
         external view 
         returns (uint256 ipAsset, uint256 baseAsset)
     {
-        require(_IPS.getPoolValid(_ipToken, _baseToken) == true, "NudgePool Not Exist");
+        require(_IPS.getPoolValid(_ipToken, _baseToken), "NudgePool Not Exist");
         
-        if (_GPS.getGPValid(_ipToken, _baseToken, _gp) == false) {
+        if (!_GPS.getGPValid(_ipToken, _baseToken, _gp)) {
             return (ipAsset, baseAsset);
         }
         

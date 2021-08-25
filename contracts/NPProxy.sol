@@ -69,7 +69,7 @@ contract NPProxy is Ownable {
         require(delayVersion.ipc != address(0) && delayVersion.gpdc != address(0) && delayVersion.gpwc != address(0) &&
                 delayVersion.lpc != address(0) && delayVersion.vtc != address(0) && delayVersion.stc != address(0) &&
                 delayVersion.lqdc != address(0), "Wrong Address");
-        if (initialized == true) {
+        if (initialized) {
             require(block.timestamp > startTime.add(delayTime), "In Delay" );
         }
         versions[delayVersionName] = delayVersion;

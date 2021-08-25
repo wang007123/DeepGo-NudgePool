@@ -22,7 +22,7 @@ contract GPWithdrawLogic is BaseLogic {
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
         address _gp = msg.sender;
-        require(_GPS.getGPValid(_ipToken, _baseToken, _gp) == true, "GP Not Exist");
+        require(_GPS.getGPValid(_ipToken, _baseToken, _gp), "GP Not Exist");
 
         // Withdraw all base token, ignore input amount
         uint256 belongLP = _GPS.getGPRaiseLPAmount(_ipToken, _baseToken, _gp);

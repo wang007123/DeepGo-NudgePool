@@ -20,7 +20,7 @@ contract BaseLogic is NPStorage {
         address _baseToken
     )
     {
-        require(_IPS.getPoolValid(_ipToken, _baseToken) == true,
+        require(_IPS.getPoolValid(_ipToken, _baseToken),
                 "NudgePool Not Exist");
         _;
     }
@@ -30,7 +30,7 @@ contract BaseLogic is NPStorage {
         address _baseToken
     )
     {
-        require(_IPS.getPoolValid(_ipToken, _baseToken) == false,
+        require(!_IPS.getPoolValid(_ipToken, _baseToken),
                 "NudgePool Exist");
         _;
     }
@@ -40,9 +40,9 @@ contract BaseLogic is NPStorage {
         address _baseToken
     )
     {
-        require(_IPS.getPoolValid(_ipToken, _baseToken) == true,
+        require(_IPS.getPoolValid(_ipToken, _baseToken),
                 "NudgePool Not Exist");
-        require(_IPS.getPoolLocked(_ipToken, _baseToken) == false,
+        require(!_IPS.getPoolLocked(_ipToken, _baseToken),
                 "NudgePool Locked");
         _IPS.setPoolLocked(_ipToken, _baseToken, true);
         _;

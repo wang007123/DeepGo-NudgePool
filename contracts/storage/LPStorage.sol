@@ -77,25 +77,25 @@ contract LPStorage {
 
     function setLPBaseAmount(address _ipt, address _bst, address _lp, uint256 _amount) external {
         require(proxy == msg.sender, "Not Permit");
-        require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
+        require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         pools[_ipt][_bst].LPM[_lp].baseTokensAmount = _amount;
     }
 
     function setLPRunningDepositAmount(address _ipt, address _bst, address _lp, uint256 _amount) external {
         require(proxy == msg.sender, "Not Permit");
-        require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
+        require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         pools[_ipt][_bst].LPM[_lp].runningDepositAmount = _amount;
     }
 
     function setLPVaultReward(address _ipt, address _bst, address _lp, uint256 _amount) external {
         require(proxy == msg.sender, "Not Permit");
-        require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
+        require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         pools[_ipt][_bst].LPM[_lp].accVaultReward = NONZERO_INIT.add(_amount);
     }
 
     function insertLP(address _ipt, address _bst, address _lp, uint256 _amount, bool running) external {
         require(proxy == msg.sender, "Not Permit");
-        require(pools[_ipt][_bst].LPM[_lp].valid == false, "LP Already Exist");
+        require(!pools[_ipt][_bst].LPM[_lp].valid, "LP Already Exist");
         pools[_ipt][_bst].LPA.push(_lp);
 
         pools[_ipt][_bst].LPM[_lp].valid = true;
@@ -113,7 +113,7 @@ contract LPStorage {
 
     function deleteLP(address _ipt, address _bst, address _lp) external {
         require(proxy == msg.sender, "Not Permit");
-        require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
+        require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         uint256 id = pools[_ipt][_bst].LPM[_lp].id;
         uint256 length = pools[_ipt][_bst].LPA.length;
 
@@ -141,17 +141,17 @@ contract LPStorage {
     }
 
     function getLPBaseAmount(address _ipt, address _bst, address _lp) external view returns(uint256) {
-        require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
+        require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         return pools[_ipt][_bst].LPM[_lp].baseTokensAmount;
     }
 
     function getLPRunningDepositAmount(address _ipt, address _bst, address _lp) external view returns(uint256) {
-        require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
+        require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         return pools[_ipt][_bst].LPM[_lp].runningDepositAmount;
     }
 
     function getLPVaultReward(address _ipt, address _bst, address _lp) external view returns(uint256) {
-        require(pools[_ipt][_bst].LPM[_lp].valid == true, "LP Not Exist");
+        require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         return pools[_ipt][_bst].LPM[_lp].accVaultReward.sub(NONZERO_INIT);
     }
 
