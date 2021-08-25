@@ -251,7 +251,7 @@ contract IPLogic is BaseLogic {
             }
 
             if (totalBaseAmount > 0) {
-                reward.add(totalBaseAmount.mul(LPAmount).div(totalLPAmount));
+                reward = reward.add(totalBaseAmount.mul(LPAmount).div(totalLPAmount));
             }
 
             IERC20(_baseToken).safeTransfer(lp, reward);
