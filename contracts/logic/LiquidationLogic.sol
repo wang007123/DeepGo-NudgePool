@@ -34,8 +34,7 @@ contract LiquidationLogic is BaseLogic {
         // Check the situation of IP liquidation
         if (closeLineAmount <= GPAmount) {
             // Check the situation of GP liquidation and the lowest swap boundary
-            if (curIPAmount.mul(price).div(inUnit) <= raiseLP &&
-                IPAmount.add(curIPAmount).mul(price).mul(RATIO_FACTOR).div(inUnit) <= raiseLP.mul(swapBoundaryRatio)) {
+            if (IPAmount.add(curIPAmount).mul(price).mul(RATIO_FACTOR).div(inUnit) <= raiseLP.mul(swapBoundaryRatio)) {
                 doIPLiquidation(_ipToken, _baseToken, true);
             } else {
                 doIPLiquidation(_ipToken, _baseToken, false);
