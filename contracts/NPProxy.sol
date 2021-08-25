@@ -84,7 +84,7 @@ contract NPProxy is Ownable {
 
     function rollback(
     )
-        public onlyOwner
+        external onlyOwner
     {
         delayVersionName = '';
         delete delayVersion;
