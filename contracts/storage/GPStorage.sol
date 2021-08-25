@@ -3,8 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "../lib/SafeMath.sol";
+import "../lib/Authority.sol";
 
-contract GPStorage {
+contract GPStorage is Authority {
     using SafeMath for uint256;
 
     // For gas optimization
@@ -33,96 +34,70 @@ contract GPStorage {
         mapping(address => GPInfo) GPM;
     }
 
-    address public admin;
-    address public proxy;
     mapping(address => mapping(address => PoolInfo)) private pools;
 
-    constructor() {
-        admin = msg.sender;
-    }
-
-    function setProxy(address _proxy) external {
-        require(admin == msg.sender, "Not Permit");
-        require(_proxy != address(0), "Invalid Address");
-        proxy = _proxy;
-    }
-
-    function setCurGPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setCurGPAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].curTotalGPAmount = _amount;
     }
 
-    function setCurRaiseLPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setCurRaiseLPAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].curTotalLPAmount = _amount;
     }
 
-    function setCurIPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setCurIPAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].curTotalIPAmount = _amount;
     }
 
-    function setCurGPBalance(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setCurGPBalance(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].curTotalBalance = _amount;
     }
 
-    function setLiquidationBaseAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setLiquidationBaseAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].liquidationBaseAmount = _amount;
     }
 
-    function setLiquidationIPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setLiquidationIPAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].liquidationIPAmount = _amount;
     }
 
-    function setGPBaseAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setGPBaseAmount(address _ipt, address _bst, address _gp, uint256 _amount) external onlyProxy {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].baseTokensAmount = _amount;
     }
 
-    function setGPRunningDepositAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setGPRunningDepositAmount(address _ipt, address _bst, address _gp, uint256 _amount) external onlyProxy {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].runningDepositAmount = _amount;
     }
 
-    function setGPHoldIPAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setGPHoldIPAmount(address _ipt, address _bst, address _gp, uint256 _amount) external onlyProxy {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].ipTokensAmount = _amount;
     }
 
-    function setGPRaiseLPAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setGPRaiseLPAmount(address _ipt, address _bst, address _gp, uint256 _amount) external onlyProxy {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].raisedFromLPAmount = _amount;
     }
 
-    function setGPBaseBalance(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setGPBaseBalance(address _ipt, address _bst, address _gp, uint256 _amount) external onlyProxy {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = _amount;
     }
 
-    function setGPAmount(address _ipt, address _bst, address _gp, uint256 _baseAmount, uint256 _baseBalance, uint256 _overRaisedAmount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setGPAmount(address _ipt, address _bst, address _gp, uint256 _baseAmount, uint256 _baseBalance, uint256 _overRaisedAmount) external onlyProxy {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].baseTokensAmount = _baseAmount;
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = _baseBalance;
         pools[_ipt][_bst].GPM[_gp].overRaisedAmount = NONZERO_INIT.add(_overRaisedAmount);
     }
 
-    function setOverRaisedAmount(address _ipt, address _bst, address _gp, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setOverRaisedAmount(address _ipt, address _bst, address _gp, uint256 _amount) external onlyProxy {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         pools[_ipt][_bst].GPM[_gp].overRaisedAmount = _amount;
     }
 
-    function insertGP(address _ipt, address _bst, address _gp, uint256 _amount, bool running) external {
-        require(proxy == msg.sender, "Not Permit");
+    function insertGP(address _ipt, address _bst, address _gp, uint256 _amount, bool running) external onlyProxy {
         require(pools[_ipt][_bst].GPM[_gp].valid == false, "GP Already Exist");
         pools[_ipt][_bst].GPA.push(_gp);
 
@@ -142,8 +117,7 @@ contract GPStorage {
         pools[_ipt][_bst].GPM[_gp].baseTokensBalance = 0;
     }
 
-    function deleteGP(address _ipt, address _bst, address _gp) external {
-        require(proxy == msg.sender, "Not Permit");
+    function deleteGP(address _ipt, address _bst, address _gp) external onlyProxy {
         require(pools[_ipt][_bst].GPM[_gp].valid == true, "GP Not Exist");
         uint256 id = pools[_ipt][_bst].GPM[_gp].id;
         uint256 length = pools[_ipt][_bst].GPA.length;
@@ -237,9 +211,7 @@ contract GPStorage {
         return pools[_ipt][_bst].GPA;
     }
 
-    function allocateFunds(address _ipt, address _bst) external {
-        require(proxy == msg.sender, "Not Permit");
-
+    function allocateFunds(address _ipt, address _bst) external onlyProxy {
         uint256 len = pools[_ipt][_bst].GPA.length;
         uint256 balance = pools[_ipt][_bst].curTotalBalance;
         uint256 IPAmount = pools[_ipt][_bst].curTotalIPAmount;
