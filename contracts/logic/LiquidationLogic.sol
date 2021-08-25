@@ -27,14 +27,14 @@ contract LiquidationLogic is BaseLogic {
         uint32 closeLine = _IPS.getIPCloseLine(_ipToken, _baseToken);
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
         uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
-        uint256 closeLineAmount = IPAmount.mul(price).div(inUnit).mul(closeLine).div(RATIO_FACTOR);
+        uint256 closeLineAmount = IPAmount.mul(price).mul(closeLine).div(inUnit).div(RATIO_FACTOR);
         uint256 curIPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
 
         // Check the situation of IP liquidation
         if (closeLineAmount <= GPAmount) {
             // Check the situation of GP liquidation and the lowest swap boundary
             if (curIPAmount.mul(price).div(inUnit) <= raiseLP &&
-                IPAmount.add(curIPAmount).mul(price).div(inUnit).mul(RATIO_FACTOR) <= raiseLP.mul(raiseLPLossRatio)) {
+                IPAmount.add(curIPAmount).mul(price).mul(RATIO_FACTOR).div(inUnit) <= raiseLP.mul(raiseLPLossRatio)) {
                 doIPLiquidation(_ipToken, _baseToken, true);
             } else {
                 doIPLiquidation(_ipToken, _baseToken, false);
@@ -63,7 +63,7 @@ contract LiquidationLogic is BaseLogic {
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
 
         // Only do GP liquidation when IP did not reach the closeline
-        if (IPAmount.mul(price).div(inUnit).mul(closeLine) <= GPAmount.mul(RATIO_FACTOR)) {
+        if (IPAmount.mul(price).mul(closeLine).div(inUnit) <= GPAmount.mul(RATIO_FACTOR)) {
             return false;
         } else if (curIPAmount.mul(price).div(inUnit) <= raiseLP) {
             doGPLiquidation(_ipToken, _baseToken);

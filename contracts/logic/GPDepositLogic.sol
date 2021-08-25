@@ -130,10 +130,10 @@ contract GPDepositLogic is BaseLogic {
         uint256 initPrice = _IPS.getPoolInitPrice(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
         // part1
-        uint256 amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(price.sqrt()).div(initPrice.sqrt()).mul(inUnit).div(initPrice);
+        uint256 amount = IPStake.mul(impawnRatio).mul(price.sqrt()).mul(inUnit).div(RATIO_FACTOR).div(initPrice.sqrt()).div(initPrice);
         maxAmount = amount;
         // part2
-        amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(alpha).div(RATIO_FACTOR).mul(inUnit).div(initPrice);
+        amount = IPStake.mul(impawnRatio).mul(alpha).mul(inUnit).div(RATIO_FACTOR).div(RATIO_FACTOR).div(initPrice);
         amount = amount.mul(price).div(initPrice);
         maxAmount = maxAmount.add(amount);
 
