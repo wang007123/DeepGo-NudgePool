@@ -3,8 +3,9 @@
 pragma solidity ^0.8.0;
 
 import "../lib/Safety.sol";
+import "../lib/Authority.sol";
 
-contract LPStorage {
+contract LPStorage is Authority {
     using Safety for uint256;
 
     struct LPInfo {
@@ -27,38 +28,21 @@ contract LPStorage {
     // For gas optimization
     uint256 constant NONZERO_INIT = 1;
 
-    address public admin;
-    address public proxy;
     mapping(address => mapping(address => PoolInfo)) private pools;
 
-    constructor() {
-        admin = msg.sender;
-    }
-
-    function setProxy(address _proxy) external {
-        require(admin == msg.sender, "Not Permit");
-        require(_proxy != address(0), "Invalid Address");
-        proxy = _proxy;
-    }
-
-    function setCurLPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setCurLPAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].curTotalLPAmount = _amount;
     }
 
-    function setLiquidationBaseAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setLiquidationBaseAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].liquidationBaseAmount = _amount;
     }
 
-    function setLiquidationIPAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setLiquidationIPAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].liquidationIPAmount = _amount;
     }
 
-    function divideVault(address _ipt, address _bst, uint256 _vault) external {
-        require(proxy == msg.sender, "Not Permit");
-
+    function divideVault(address _ipt, address _bst, uint256 _vault) external onlyProxy {
         uint256 len = pools[_ipt][_bst].LPA.length;
         uint256 LPAmount = pools[_ipt][_bst].curTotalLPAmount;
         uint256 resVault = _vault;
@@ -75,26 +59,22 @@ contract LPStorage {
         }
     }
 
-    function setLPBaseAmount(address _ipt, address _bst, address _lp, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setLPBaseAmount(address _ipt, address _bst, address _lp, uint256 _amount) external onlyProxy {
         require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         pools[_ipt][_bst].LPM[_lp].baseTokensAmount = _amount;
     }
 
-    function setLPRunningDepositAmount(address _ipt, address _bst, address _lp, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setLPRunningDepositAmount(address _ipt, address _bst, address _lp, uint256 _amount) external onlyProxy {
         require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         pools[_ipt][_bst].LPM[_lp].runningDepositAmount = _amount;
     }
 
-    function setLPVaultReward(address _ipt, address _bst, address _lp, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setLPVaultReward(address _ipt, address _bst, address _lp, uint256 _amount) external onlyProxy {
         require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         pools[_ipt][_bst].LPM[_lp].accVaultReward = NONZERO_INIT.add(_amount);
     }
 
-    function insertLP(address _ipt, address _bst, address _lp, uint256 _amount, bool running) external {
-        require(proxy == msg.sender, "Not Permit");
+    function insertLP(address _ipt, address _bst, address _lp, uint256 _amount, bool running) external onlyProxy {
         require(!pools[_ipt][_bst].LPM[_lp].valid, "LP Already Exist");
         pools[_ipt][_bst].LPA.push(_lp);
 
@@ -111,8 +91,7 @@ contract LPStorage {
         pools[_ipt][_bst].LPM[_lp].accVaultReward = NONZERO_INIT;
     }
 
-    function deleteLP(address _ipt, address _bst, address _lp) external {
-        require(proxy == msg.sender, "Not Permit");
+    function deleteLP(address _ipt, address _bst, address _lp) external onlyProxy {
         require(pools[_ipt][_bst].LPM[_lp].valid, "LP Not Exist");
         uint256 id = pools[_ipt][_bst].LPM[_lp].id;
         uint256 length = pools[_ipt][_bst].LPA.length;

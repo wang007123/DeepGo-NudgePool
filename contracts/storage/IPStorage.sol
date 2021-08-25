@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
+import "../lib/Authority.sol";
 
 pragma solidity ^0.8.0;
 
-contract IPStorage {
+contract IPStorage is Authority {
     struct IPParam {
         uint32      ipImpawnRatio;
         uint32      ipCloseLine;
@@ -37,23 +38,10 @@ contract IPStorage {
         address     baseToken;
     }
 
-    address public admin;
-    address public proxy;
     mapping(address => mapping(address => PoolInfo)) private pools;
     Pool[]  private poolsArray;
 
-    constructor() {
-        admin = msg.sender;
-    }
-
-    function setProxy(address _proxy) external {
-        require(admin == msg.sender, "Not Permit");
-        require(_proxy != address(0), "Invalid Address");
-        proxy = _proxy;
-    }
-
-    function insertPool(address _ipt, address _bst) external {
-        require(proxy == msg.sender, "Not Permit");
+    function insertPool(address _ipt, address _bst) external onlyProxy {
         require(!pools[_ipt][_bst].valid, "Pool Already Exist");
 
         poolsArray.push(Pool(_ipt, _bst));
@@ -63,8 +51,7 @@ contract IPStorage {
         pools[_ipt][_bst].createdTime = block.timestamp;
     }
 
-    function deletePool(address _ipt, address _bst) external {
-        require(proxy == msg.sender, "Not Permit");
+    function deletePool(address _ipt, address _bst) external onlyProxy {
         require(pools[_ipt][_bst].valid, "Pool Not Exist");
         uint256 id = pools[_ipt][_bst].id;
         uint256 length = poolsArray.length;
@@ -93,78 +80,63 @@ contract IPStorage {
         pools[_ipt][_bst].IP.param.duration = 0;
     }
 
-    function setPoolValid(address _ipt, address _bst, bool _valid) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setPoolValid(address _ipt, address _bst, bool _valid) external onlyProxy {
         pools[_ipt][_bst].valid = _valid;
     }
 
-    function setPoolLocked(address _ipt, address _bst, bool _locked) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setPoolLocked(address _ipt, address _bst, bool _locked) external onlyProxy {
         pools[_ipt][_bst].locked = _locked;
     }
 
-    function setPoolStage(address _ipt, address _bst, uint8 _stage) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setPoolStage(address _ipt, address _bst, uint8 _stage) external onlyProxy {
         pools[_ipt][_bst].stage = _stage;
     }
 
-    function setPoolCreateTime(address _ipt, address _bst, uint256 _time) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setPoolCreateTime(address _ipt, address _bst, uint256 _time) external onlyProxy {
         pools[_ipt][_bst].createdTime = _time;
     }
 
-    function setPoolAuctionEndTime(address _ipt, address _bst, uint256 _time) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setPoolAuctionEndTime(address _ipt, address _bst, uint256 _time) external onlyProxy {
         pools[_ipt][_bst].auctionEndTime = _time;
     }
 
-    function setPoolInitPrice(address _ipt, address _bst, uint256 _price) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setPoolInitPrice(address _ipt, address _bst, uint256 _price) external onlyProxy {
         pools[_ipt][_bst].initPrice = _price;
     }
 
-    function setIPInitCanRaise(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setIPInitCanRaise(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].initIPCanRaiseAmount = _amount;
     }
 
-    function setIPMaxCanRaise(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setIPMaxCanRaise(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].maxIPCanRaiseAmount = _amount;
     }
 
-    function setIPAddress(address _ipt, address _bst, address _ip) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setIPAddress(address _ipt, address _bst, address _ip) external onlyProxy {
         pools[_ipt][_bst].IP.ip = _ip;
     }
 
-    function setIPTokensAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setIPTokensAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].IP.ipTokensAmount = _amount;
     }
 
-    function setDGTTokensAmount(address _ipt, address _bst, uint256 _amount) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setDGTTokensAmount(address _ipt, address _bst, uint256 _amount) external onlyProxy {
         pools[_ipt][_bst].IP.dgtTokensAmount = _amount;
     }
 
-    function setIPImpawnRatio(address _ipt, address _bst, uint32 _ratio) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setIPImpawnRatio(address _ipt, address _bst, uint32 _ratio) external onlyProxy {
         pools[_ipt][_bst].IP.param.ipImpawnRatio = _ratio;
     }
 
-    function setIPCloseLine(address _ipt, address _bst, uint32 _ratio) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setIPCloseLine(address _ipt, address _bst, uint32 _ratio) external onlyProxy {
         pools[_ipt][_bst].IP.param.ipCloseLine = _ratio;
     }
 
-    function setIPChargeRatio(address _ipt, address _bst, uint32 _ratio) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setIPChargeRatio(address _ipt, address _bst, uint32 _ratio) external onlyProxy {
         pools[_ipt][_bst].IP.param.chargeRatio = _ratio;
     }
 
-    function setIPDuration(address _ipt, address _bst, uint256 _duration) external {
-        require(proxy == msg.sender, "Not Permit");
+    function setIPDuration(address _ipt, address _bst, uint256 _duration) external onlyProxy {
         pools[_ipt][_bst].IP.param.duration = _duration;
     }
 

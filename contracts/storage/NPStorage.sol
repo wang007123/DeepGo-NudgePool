@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "../lib/Ownable.sol";
+import "../lib/Authority.sol";
 import "./IPStorage.sol";
 import "./GPStorage.sol";
 import "./VaultStorage.sol";
 import "./LPStorage.sol";
 
-contract NPStorage is Ownable {
+contract NPStorage is Authority {
     uint256 constant RATIO_FACTOR = 1000000;
 
     uint32 public minRatio = uint32(RATIO_FACTOR * 5 / 10000);
