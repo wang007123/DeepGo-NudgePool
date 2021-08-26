@@ -84,7 +84,6 @@ contract GPDepositLogic is BaseLogic {
         address _ipToken,
         address _baseToken
     )
-    
         external
         lockPool(_ipToken, _baseToken)
     {
@@ -93,6 +92,7 @@ contract GPDepositLogic is BaseLogic {
         uint256 amount = _GPS.getGPRunningDepositAmount(_ipToken, _baseToken, _gp);
 
         require(amount > 0, "Already done");
+
         _GPS.setCurGPAmount(_ipToken, _baseToken,
                             _GPS.getCurGPAmount(_ipToken, _baseToken).add(amount));
         _GPS.setGPBaseAmount(_ipToken, _baseToken, _gp,

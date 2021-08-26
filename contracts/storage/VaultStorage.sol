@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-import "../lib/SafeMath.sol";
-import "../lib/Authority.sol";
-
 pragma solidity ^0.8.0;
+
+import "../lib/Authority.sol";
 
 contract VaultStorage is Authority {
     struct VaultInfo {

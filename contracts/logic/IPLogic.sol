@@ -25,7 +25,7 @@ contract IPLogic is BaseLogic {
         external
         poolNotExist(_ipToken, _baseToken)
     {
-        require(!NPSwap.pairFor(_ipToken, _baseToken).isContract(), "No liquidity");
+        require(NPSwap.pairFor(_ipToken, _baseToken).isContract(), "No liquidity");
         qualifiedIP(_ip, _ipToken, _baseToken, _ipTokensAmount, _dgtTokensAmount, true);
         checkIPParams(_ipImpawnRatio, _ipCloseLine, _chargeRatio, _duration);
 
