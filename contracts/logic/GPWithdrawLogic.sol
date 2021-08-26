@@ -37,6 +37,7 @@ contract GPWithdrawLogic is BaseLogic {
             amount = amount.sub(earnedGP.mul(20).div(100));
         }
 
+        amount = amount.add(_GPS.getGPRunningDepositAmount(_ipToken, _baseToken, _gp));
         if (amount > 0) {
             IERC20(_baseToken).safeTransfer(_gp, amount);
         }
@@ -74,13 +75,15 @@ contract GPWithdrawLogic is BaseLogic {
         uint256 totalBaseAmount =  _GPS.getLiquidationBaseAmount(_ipToken, _baseToken);
         uint256 totalBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
         uint256 balance = _GPS.getGPBaseBalance(_ipToken, _baseToken, _gp);
+        uint256 runningDepositAmount = _GPS.getGPRunningDepositAmount(_ipToken, _baseToken, _gp);
+        totalBaseAmount = totalBaseAmount.mul(balance).div(totalBalance).add(runningDepositAmount);
 
         if (totalIPAmount > 0) {
             IERC20(_ipToken).safeTransfer(_gp, totalIPAmount.mul(balance).div(totalBalance));
         }
 
         if (totalBaseAmount > 0) {
-            IERC20(_baseToken).safeTransfer(_gp, totalBaseAmount.mul(balance).div(totalBalance));
+            IERC20(_baseToken).safeTransfer(_gp, totalBaseAmount);
         }
 
         _GPS.deleteGP(_ipToken, _baseToken, _gp);

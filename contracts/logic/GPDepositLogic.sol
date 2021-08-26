@@ -84,7 +84,6 @@ contract GPDepositLogic is BaseLogic {
         address _ipToken,
         address _baseToken
     )
-    
         external
         lockPool(_ipToken, _baseToken)
     {
@@ -93,6 +92,8 @@ contract GPDepositLogic is BaseLogic {
         uint256 amount = _GPS.getGPRunningDepositAmount(_ipToken, _baseToken, _gp);
 
         require(amount > 0, "Already done");
+        amount = repayOverRaise(_ipToken, _baseToken, _gp, amount);
+
         _GPS.setCurGPAmount(_ipToken, _baseToken,
                             _GPS.getCurGPAmount(_ipToken, _baseToken).add(amount));
         _GPS.setGPBaseAmount(_ipToken, _baseToken, _gp,
@@ -114,6 +115,26 @@ contract GPDepositLogic is BaseLogic {
         oriBalance = _GPS.getCurIPAmount(_ipToken, _baseToken);
         _GPS.setCurIPAmount(_ipToken, _baseToken, oriBalance.add(swappedIP));
         _GPS.allocateFunds(_ipToken, _baseToken);
+    }
+
+    function repayOverRaise(        
+        address _ipToken,
+        address _baseToken,
+        address _gp,
+        uint256 _amount
+    ) 
+        private 
+        returns (uint256 amount) 
+    {
+        uint256 maxAmount = updateMaxIPCanRaise(_ipToken, _baseToken);
+        uint256 curAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
+
+        require(maxAmount > curAmount, "No Space Left");
+
+        if (maxAmount.sub(curAmount) < _amount) {
+            IERC20(_baseToken).safeTransfer(_gp, _amount.sub(maxAmount.sub(curAmount)));
+            amount = maxAmount.sub(curAmount);
+        } 
     }
 
     function updateMaxIPCanRaise(

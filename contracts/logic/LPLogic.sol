@@ -114,10 +114,11 @@ contract LPLogic is BaseLogic {
         }
 
         // Withdraw all base token, ignore input amount
+        uint256 runningDepositAmount = _LPS.getLPRunningDepositAmount(_ipToken, _baseToken, _lp);
         _baseTokensAmount = _LPS.getLPBaseAmount(_ipToken, _baseToken, _lp);
         amount = reclaimFromGP(_ipToken, _baseToken, _baseTokensAmount);
         amount = amount.add(_LPS.getLPVaultReward(_ipToken, _baseToken, _lp));
-        amount = amount.sub(chargeFee(_ipToken, _baseToken, _lp));
+        amount = amount.sub(chargeFee(_ipToken, _baseToken, _lp)).add(runningDepositAmount);
         IERC20(_baseToken).safeTransfer(_lp, amount);
         _LPS.deleteLP(_ipToken, _baseToken, _lp);
 
@@ -138,16 +139,17 @@ contract LPLogic is BaseLogic {
         uint256 totalLPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
         uint256 LPAmount = _LPS.getLPBaseAmount(_ipToken, _baseToken, _lp);
         uint256 reward = _LPS.getLPVaultReward(_ipToken, _baseToken, _lp);
+        uint256 runningDepositAmount = _LPS.getLPRunningDepositAmount(_ipToken, _baseToken, _lp);
 
         if (totalIPAmount > 0) {
             IERC20(_ipToken).safeTransfer(_lp, totalIPAmount.mul(LPAmount).div(totalLPAmount));
         }
 
         if (totalBaseAmount > 0) {
-            reward.add(totalBaseAmount.mul(LPAmount).div(totalLPAmount));
+            reward = reward.add(totalBaseAmount.mul(LPAmount).div(totalLPAmount));
         }
 
-        IERC20(_baseToken).safeTransfer(_lp, reward);
+        IERC20(_baseToken).safeTransfer(_lp, reward.add(runningDepositAmount));
         _LPS.deleteLP(_ipToken, _baseToken, _lp);
     }
 
