@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "./lib/Ownable.sol";
+import "./lib/Authority.sol";
 import "./lib/Safety.sol";
 
-contract NPProxy is Ownable {
+contract NPProxy is Authority {
     using Safety for uint256;
 
     struct LogicContracts {
@@ -24,7 +24,7 @@ contract NPProxy is Ownable {
     string[] public versionList;
     string public versionName;
     string public delayVersionName;
-    uint256 constant delayTime = 5 minutes;
+    uint256 constant delayTime = 24 hours;
     uint256 public startTime;
     bool public initialized;
 
@@ -50,6 +50,7 @@ contract NPProxy is Ownable {
                 _lpc != address(0) && _vtc != address(0) && _stc != address(0) &&
                 _lqdc != address(0), "Wrong Address");
         require(bytes(_newVersion).length > 0, "Empty Version");
+        require(keccak256(abi.encodePacked(versionName)) != keccak256(abi.encodePacked(_newVersion)), "Existing Version");
         delayVersionName = _newVersion;
         delayVersion.ipc = _ipc;
         delayVersion.gpdc = _gpdc;
