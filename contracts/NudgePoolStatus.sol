@@ -374,6 +374,8 @@ contract NudgePoolStatus {
             if (block.timestamp >= time.add(_NP.raisingDuration())) {
                 return true;
             }
+        } else if (stage == uint8(Stages.ALLOCATING)) {
+            return true;
         } else if (stage == uint8(Stages.RUNNING)) {
             uint256 duration = _IPS.getIPDuration(_ipToken, _baseToken);
             if (block.timestamp >= time.add(duration)) {
