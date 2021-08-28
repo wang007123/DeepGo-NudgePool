@@ -5,11 +5,11 @@ import { getBigNumber, sleep } from "./utils";
 
 describe("NudgePool", function() {
   before(async function() {
-    const NPSwapAddress = "0x27839Bb6045a773f0C280C8c8F0D6cdF92415A31";
-    const NudgePoolAddress = "0x6d7b5D1bda21a02C756aAcecbfe444dede48e731";
-    const NudgePoolStatusAddress = "0xA603Fa2b3A7e79273277F8c2381535B81d5d5AE2";
+    const NPSwapAddress = "0x263d3eA33Df399926f7114570F61c2780D1E7388";
+    const NudgePoolAddress = "0x5e5701E1b51479965e84436f3e01942B33B03039";
+    const NudgePoolStatusAddress = "0x11caB0B740D172D74e35DcAEC420cf1c54EdB10c";
 
-    this.token1 = "0xD33Dc5D483Ed42bDA6C99506c21114e517eDAFd4";
+    this.token1 = "0x7D42395c991337c9A14B5630efB70Ef34043da6a";
     this.token2 = "0xB638F4D59F85a6036870fDB8e031831267DF9FC0";
     this.dgt = "0xB6d7Bf947d4D6321FD863ACcD2C71f022BCFd0eE";
 
@@ -315,9 +315,27 @@ describe("NudgePool", function() {
       this.token1, this.token2)).to.be.equal(4);
   })
 
+  it("Allocate fundraising", async function() {
+    const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
+    // Return while not at allocating stage
+    if (stage != 4) {
+      return
+    }
+
+    const allocateFundraisingTx = await this.NudgePool.allocateFundraising(
+      this.token1,
+      this.token2
+    );
+    await allocateFundraisingTx.wait();
+
+    // Expect at running stage
+    expect(await this.NudgePoolStatus.getPoolStage(
+      this.token1, this.token2)).to.be.equal(5);
+  })
+
   it("IP deposit running", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
-    if (stage != 3 && stage != 4) {
+    if (stage != 5) {
       return
     }
 
@@ -339,7 +357,7 @@ describe("NudgePool", function() {
   it("GP deposit running", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
     // Return while not at running stage
-    if (stage != 4) {
+    if (stage != 5) {
       return
     }
 
@@ -372,7 +390,7 @@ describe("NudgePool", function() {
   it("GP additionally deposit running", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
     // Return while not at running stage
-    if (stage != 4) {
+    if (stage != 5) {
       return
     }
 
@@ -405,7 +423,7 @@ describe("NudgePool", function() {
   it("LP deposit running", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
     // Return while not at running stage
-    if (stage != 4) {
+    if (stage != 5) {
       return
     }
 
@@ -439,7 +457,7 @@ describe("NudgePool", function() {
   it("LP additionally deposit running", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
     // Return while not at running stage
-    if (stage != 4) {
+    if (stage != 5) {
       return
     }
 
@@ -472,7 +490,7 @@ describe("NudgePool", function() {
   it("LP withdraw vault", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
     // Return while not at running stage
-    if (stage != 4) {
+    if (stage != 5) {
       return
     }
     const computeVaultTX = await this.NudgePool.computeVaultReward(
@@ -498,7 +516,7 @@ describe("NudgePool", function() {
   it("GP1 withdraw running", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
     // Return while not at running stage
-    if (stage != 4) {
+    if (stage != 5) {
       return
     }
 
@@ -513,28 +531,10 @@ describe("NudgePool", function() {
       this.token1, this.token2)).to.be.equal(getBigNumber(40));
   })
 
-  it("GP2 withdraw running", async function() {
-    const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
-    // Return while not at running stage
-    if (stage != 4) {
-      return
-    }
-
-    const gpWithdrawRunning2TX = await this.NudgePool.connect(this.gpAccount2).GPWithdrawRunning(
-      this.token1,
-      this.token2,
-      getBigNumber(10)
-    );
-    await gpWithdrawRunning2TX.wait();
-
-    expect(await this.NudgePoolStatus.getCurGPAmount(
-      this.token1, this.token2)).to.be.equal(0);
-  })
-
   it("LP1 withdraw running", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
     // Return while not at running stage
-    if (stage != 4) {
+    if (stage != 5) {
       return
     }
 
@@ -550,29 +550,10 @@ describe("NudgePool", function() {
       this.token1, this.token2)).to.be.equal(getBigNumber(50));
   })
 
-  it("LP2 withdraw running", async function() {
-    const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
-    // Return while not at running stage
-    if (stage != 4) {
-      return
-    }
-
-    const lpWithdrawRunning2TX = await this.NudgePool.connect(this.lpAccount2).LPWithdrawRunning(
-      this.token1,
-      this.token2,
-      getBigNumber(10),
-      false
-    );
-    await lpWithdrawRunning2TX.wait();
-
-    expect(await this.NudgePoolStatus.getCurLPAmount(
-      this.token1, this.token2)).to.be.equal(0);
-  })
-
   it("IP withdraw vault", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
     // Return while not at running stage
-    if (stage != 4) {
+    if (stage != 5) {
       return
     }
 
@@ -592,12 +573,12 @@ describe("NudgePool", function() {
   it("Check running end", async function() {
     const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
     // Return while not at running stage
-    if (stage != 4) {
+    if (stage != 5) {
       return
     }
 
     // Wait to transit
-    console.log("At running stage and wait for finished stage");
+    console.log("At running stage and wait for liquidation stage");
     let transit = await this.NudgePoolStatus.getStageTransit(
     this.token1, this.token2);
     while (transit == false) {
@@ -605,13 +586,59 @@ describe("NudgePool", function() {
       transit = await this.NudgePoolStatus.getStageTransit(
         this.token1, this.token2);
     }
-    console.log("Transit to finished stage");
+    console.log("Transit to liquidation stage");
 
     const runningEndTx = await this.NudgePool.connect(this.ipAccount2).checkRunningEnd(
       this.token1,
       this.token2
     );
     await runningEndTx.wait();
+
+    // Expect at liquidation stage
+    expect(await this.NudgePoolStatus.getPoolStage(
+      this.token1, this.token2)).to.be.equal(6);
+  })
+
+  it("GP2 withdraw liquidation", async function() {
+    const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
+    // Return while not at liquidation stage
+    if (stage != 6) {
+      return
+    }
+
+    const gpWithdrawLiquidationTx = await this.NudgePool.connect(this.gpAccount2).GPWithdrawLiquidation(
+      this.token1,
+      this.token2,
+    );
+    await gpWithdrawLiquidationTx.wait();
+  })
+
+  it("LP2 withdraw liquidation", async function() {
+    const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
+    // Return while not at liquidation stage
+    if (stage != 6) {
+      return
+    }
+
+    const lpWithdrawLiquidationTx = await this.NudgePool.connect(this.lpAccount2).LPWithdrawLiquidation(
+      this.token1,
+      this.token2
+    );
+    await lpWithdrawLiquidationTx.wait();
+  })
+
+  it("Destroy Pool", async function() {
+    const stage = await this.NudgePoolStatus.getPoolStage(this.token1, this.token2);
+    // Return while not at liquidation stage
+    if (stage != 6) {
+      return
+    }
+
+    const destroyTx = await this.NudgePool.destroyPool(
+      this.token1,
+      this.token2
+    );
+    await destroyTx.wait();
 
     // Expect at finished stage
     expect(await this.NudgePoolStatus.getPoolStage(
