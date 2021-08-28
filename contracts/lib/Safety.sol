@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-library SafeMath {
+library Safety {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0) {
             return 0;
@@ -82,5 +82,18 @@ library SafeMath {
         r = (r + x / r) >> 1; // Seven iterations should be enough
         uint256 r1 = x / r;
         return (r < r1 ? r : r1);
+    }
+
+    function isContract(address account) internal view returns (bool) {
+        // This method relies in extcodesize, which returns 0 for contracts in
+        // construction, since the code is only stored at the end of the
+        // constructor execution.
+
+        uint256 size;
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
     }
 }

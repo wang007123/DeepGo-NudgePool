@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract LPLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for uint256;
     using SafeERC20 for IERC20;
 
     uint256 constant MAX_LP_NUMBER = 1500;
@@ -114,10 +114,11 @@ contract LPLogic is BaseLogic {
         }
 
         // Withdraw all base token, ignore input amount
+        uint256 runningDepositAmount = _LPS.getLPRunningDepositAmount(_ipToken, _baseToken, _lp);
         _baseTokensAmount = _LPS.getLPBaseAmount(_ipToken, _baseToken, _lp);
         amount = reclaimFromGP(_ipToken, _baseToken, _baseTokensAmount);
         amount = amount.add(_LPS.getLPVaultReward(_ipToken, _baseToken, _lp));
-        amount = amount.sub(chargeFee(_ipToken, _baseToken, _lp));
+        amount = amount.sub(chargeFee(_ipToken, _baseToken, _lp)).add(runningDepositAmount);
         IERC20(_baseToken).safeTransfer(_lp, amount);
         _LPS.deleteLP(_ipToken, _baseToken, _lp);
 
@@ -138,16 +139,17 @@ contract LPLogic is BaseLogic {
         uint256 totalLPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
         uint256 LPAmount = _LPS.getLPBaseAmount(_ipToken, _baseToken, _lp);
         uint256 reward = _LPS.getLPVaultReward(_ipToken, _baseToken, _lp);
+        uint256 runningDepositAmount = _LPS.getLPRunningDepositAmount(_ipToken, _baseToken, _lp);
 
         if (totalIPAmount > 0) {
             IERC20(_ipToken).safeTransfer(_lp, totalIPAmount.mul(LPAmount).div(totalLPAmount));
         }
 
         if (totalBaseAmount > 0) {
-            reward.add(totalBaseAmount.mul(LPAmount).div(totalLPAmount));
+            reward = reward.add(totalBaseAmount.mul(LPAmount).div(totalLPAmount));
         }
 
-        IERC20(_baseToken).safeTransfer(_lp, reward);
+        IERC20(_baseToken).safeTransfer(_lp, reward.add(runningDepositAmount));
         _LPS.deleteLP(_ipToken, _baseToken, _lp);
     }
 
@@ -176,7 +178,7 @@ contract LPLogic is BaseLogic {
         lend = GPBalance.mul(raiseRatio + RATIO_FACTOR).div(RATIO_FACTOR).sub(balance);
         lend = lend > _amount ? _amount : lend;
 
-        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken, lend);
+        uint256 swappedIP = safeSwap(_baseToken, _ipToken, lend);
         _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, raiseLP.add(lend));
         _GPS.setCurIPAmount(_ipToken, _baseToken, IPAmount.add(swappedIP));
         _GPS.allocateFunds(_ipToken, _baseToken);
@@ -216,7 +218,7 @@ contract LPLogic is BaseLogic {
         }
 
         uint256 swappedIP = expect.mul(inUnit).div(price);
-        uint256 real = NPSwap.swap(_ipToken, _baseToken, swappedIP);
+        uint256 real = safeSwap(_ipToken, _baseToken, swappedIP);
         _GPS.setCurIPAmount(_ipToken, _baseToken, IPAmount.sub(swappedIP));
         _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, curRaiseLP.sub(expect));
         _LPS.setCurLPAmount(_ipToken, _baseToken, LPAmount.sub(_amount));

@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract LiquidationLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for *;
     using SafeERC20 for IERC20;
 
     function checkIPLiquidation(
@@ -21,20 +21,20 @@ contract LiquidationLogic is BaseLogic {
         returns (bool)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
+        require(!msg.sender.isContract(), "Not support contract");
         uint256 inUnit = 10**ERC20(_ipToken).decimals();
         uint256 price = NPSwap.getAmountOut(_ipToken, _baseToken, inUnit);
         uint256 IPAmount = _IPS.getIPTokensAmount(_ipToken, _baseToken);
         uint32 closeLine = _IPS.getIPCloseLine(_ipToken, _baseToken);
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
         uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
-        uint256 closeLineAmount = IPAmount.mul(price).div(inUnit).mul(closeLine).div(RATIO_FACTOR);
+        uint256 closeLineAmount = IPAmount.mul(price).mul(closeLine).div(inUnit).div(RATIO_FACTOR);
         uint256 curIPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
 
         // Check the situation of IP liquidation
         if (closeLineAmount <= GPAmount) {
             // Check the situation of GP liquidation and the lowest swap boundary
-            if (curIPAmount.mul(price).div(inUnit) <= raiseLP &&
-                IPAmount.add(curIPAmount).mul(price).div(inUnit).mul(RATIO_FACTOR) <= raiseLP.mul(raiseLPLossRatio)) {
+            if (IPAmount.add(curIPAmount).mul(price).mul(RATIO_FACTOR).div(inUnit) <= raiseLP.mul(swapBoundaryRatio)) {
                 doIPLiquidation(_ipToken, _baseToken, true);
             } else {
                 doIPLiquidation(_ipToken, _baseToken, false);
@@ -54,6 +54,7 @@ contract LiquidationLogic is BaseLogic {
         returns (bool)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
+        require(!msg.sender.isContract(), "Not support contract");
         uint256 inUnit = 10**ERC20(_ipToken).decimals();
         uint256 price = NPSwap.getAmountOut(_ipToken, _baseToken, inUnit);
         uint256 IPAmount = _IPS.getIPTokensAmount(_ipToken, _baseToken);
@@ -63,7 +64,7 @@ contract LiquidationLogic is BaseLogic {
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
 
         // Only do GP liquidation when IP did not reach the closeline
-        if (IPAmount.mul(price).div(inUnit).mul(closeLine) <= GPAmount.mul(RATIO_FACTOR)) {
+        if (IPAmount.mul(price).mul(closeLine).div(inUnit) <= GPAmount.mul(RATIO_FACTOR)) {
             return false;
         } else if (curIPAmount.mul(price).div(inUnit) <= raiseLP) {
             doGPLiquidation(_ipToken, _baseToken);
@@ -111,7 +112,7 @@ contract LiquidationLogic is BaseLogic {
         uint256 requireIP = NPSwap.getAmountIn(_ipToken, _baseToken, raiseLP);
         requireIP = requireIP > IPAmount ? IPAmount : requireIP;
         if (requireIP > 0 && !_raiseLPLoss) {
-            belongLP = NPSwap.swap(_ipToken, _baseToken, requireIP);
+            belongLP = safeSwap(_ipToken, _baseToken, requireIP);
         }
 
         belongGP = IPAmount.sub(requireIP);
@@ -146,6 +147,7 @@ contract LiquidationLogic is BaseLogic {
 
         if (IPAmount > 0) {
             belongLP= NPSwap.swap(_ipToken, _baseToken, IPAmount);
+            belongLP= safeSwap(_ipToken, _baseToken, IPAmount);
         }
 
         belongLP = belongLP.add(LPBase.sub(raiseLP));
@@ -171,7 +173,7 @@ contract LiquidationLogic is BaseLogic {
         uint256 belongGP = 0;
 
         if (IPAmount > 0 ) {
-            swappedBase = NPSwap.swap(_ipToken, _baseToken, IPAmount);
+            swappedBase = safeSwap(_ipToken, _baseToken, IPAmount);
         }
 
         belongLP = swappedBase > raiseLP ? raiseLP : swappedBase;

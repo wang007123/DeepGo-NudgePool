@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract GPDepositLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for uint256;
     using SafeERC20 for IERC20;
 
     uint256 constant MAX_GP_NUMBER = 500;
@@ -84,7 +84,6 @@ contract GPDepositLogic is BaseLogic {
         address _ipToken,
         address _baseToken
     )
-    
         external
         lockPool(_ipToken, _baseToken)
     {
@@ -93,6 +92,7 @@ contract GPDepositLogic is BaseLogic {
         uint256 amount = _GPS.getGPRunningDepositAmount(_ipToken, _baseToken, _gp);
 
         require(amount > 0, "Already done");
+
         _GPS.setCurGPAmount(_ipToken, _baseToken,
                             _GPS.getCurGPAmount(_ipToken, _baseToken).add(amount));
         _GPS.setGPBaseAmount(_ipToken, _baseToken, _gp,
@@ -108,9 +108,8 @@ contract GPDepositLogic is BaseLogic {
         _GPS.setGPBaseBalance(_ipToken, _baseToken, _gp, oriBalance.add(_amount));
         oriBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
         _GPS.setCurGPBalance(_ipToken, _baseToken, oriBalance.add(_amount));
-        
-        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
-                                           _amount.add(raiseLP));
+        uint256 swappedIP = safeSwap(_baseToken, _ipToken, _amount.add(raiseLP));
+
         oriBalance = _GPS.getCurIPAmount(_ipToken, _baseToken);
         _GPS.setCurIPAmount(_ipToken, _baseToken, oriBalance.add(swappedIP));
         _GPS.allocateFunds(_ipToken, _baseToken);
@@ -130,10 +129,10 @@ contract GPDepositLogic is BaseLogic {
         uint256 initPrice = _IPS.getPoolInitPrice(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
         // part1
-        uint256 amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(price.sqrt()).div(initPrice.sqrt()).mul(inUnit).div(initPrice);
+        uint256 amount = IPStake.mul(impawnRatio).mul(price.sqrt()).mul(inUnit).div(RATIO_FACTOR).div(initPrice.sqrt()).div(initPrice);
         maxAmount = amount;
         // part2
-        amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(alpha).div(RATIO_FACTOR).mul(inUnit).div(initPrice);
+        amount = IPStake.mul(impawnRatio).mul(alpha).mul(inUnit).div(RATIO_FACTOR).div(RATIO_FACTOR).div(initPrice);
         amount = amount.mul(price).div(initPrice);
         maxAmount = maxAmount.add(amount);
 

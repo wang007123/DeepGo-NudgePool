@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract StateLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for *;
     using SafeERC20 for IERC20;
 
     struct GPAlloc {
@@ -46,6 +46,7 @@ contract StateLogic is BaseLogic {
         returns (bool)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RAISING);
+        require(!msg.sender.isContract(), "Not support contract");
 
         uint256 time = _IPS.getPoolAuctionEndTime(_ipToken, _baseToken);
         if (block.timestamp < time.add(raisingDuration)) {
@@ -78,7 +79,7 @@ contract StateLogic is BaseLogic {
         uint256 price = NPSwap.getAmountOut(_baseToken, _ipToken, inUnit);
         uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
-        uint256 initAmount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(inUnit).div(price);
+        uint256 initAmount = IPStake.mul(impawnRatio).mul(inUnit).div(RATIO_FACTOR).div(price);
 
         _IPS.setPoolInitPrice(_ipToken, _baseToken, price);
         _IPS.setIPInitCanRaise(_ipToken, _baseToken, initAmount);
@@ -98,10 +99,10 @@ contract StateLogic is BaseLogic {
         uint256 initPrice = _IPS.getPoolInitPrice(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
         // part 1
-        uint256 amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(price.sqrt()).div(initPrice.sqrt()).mul(inUnit).div(initPrice);
+        uint256 amount = IPStake.mul(impawnRatio).mul(price.sqrt()).mul(inUnit).div(RATIO_FACTOR).div(initPrice.sqrt()).div(initPrice);
         maxAmount = amount;
         // part2
-        amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(alpha).div(RATIO_FACTOR).mul(inUnit).div(initPrice);
+        amount = IPStake.mul(impawnRatio).mul(alpha).mul(inUnit).div(RATIO_FACTOR).div(RATIO_FACTOR).div(initPrice);
         amount = amount.mul(price).div(initPrice);
         maxAmount = maxAmount.add(amount);
 
@@ -124,7 +125,7 @@ contract StateLogic is BaseLogic {
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
 
         maxAmount = maxAmount > GPAmount ? GPAmount : maxAmount;
-        if (IPAmount.mul(price).div(inUnit).mul(closeLine) <= maxAmount.mul(RATIO_FACTOR)) {
+        if (IPAmount.mul(price).mul(closeLine).div(inUnit) <= maxAmount.mul(RATIO_FACTOR)) {
             doRaisingLiquidation(_ipToken, _baseToken);
         } else {
             allocateGP(_ipToken, _baseToken);
@@ -148,7 +149,7 @@ contract StateLogic is BaseLogic {
         }
         uint256 fee = chargeVaultFee(_ipToken, _baseToken, GPAmount);
         uint256 raiseLP = raiseFromLP(_ipToken, _baseToken, GPAmount.sub(fee));
-        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
+        uint256 swappedIP = safeSwap(_baseToken, _ipToken,
                                         GPAmount.add(raiseLP).sub(fee));
         _GPS.setCurIPAmount(_ipToken, _baseToken, swappedIP);
         _GPS.allocateFunds(_ipToken, _baseToken);

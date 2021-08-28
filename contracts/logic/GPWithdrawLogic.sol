@@ -3,12 +3,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../lib/SafeMath.sol";
-import "../lib/NPSwap.sol";
+import "../lib/Safety.sol";
 import "./BaseLogic.sol";
 
 contract GPWithdrawLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for uint256;
     using SafeERC20 for IERC20;
 
     function GPWithdrawRunning(
@@ -22,12 +21,13 @@ contract GPWithdrawLogic is BaseLogic {
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
         address _gp = msg.sender;
-        require(_GPS.getGPValid(_ipToken, _baseToken, _gp) == true, "GP Not Exist");
+        require(_GPS.getGPValid(_ipToken, _baseToken, _gp), "GP Not Exist");
 
         // Withdraw all base token, ignore input amount
         uint256 belongLP = _GPS.getGPRaiseLPAmount(_ipToken, _baseToken, _gp);
         uint256 IPAmount = _GPS.getGPHoldIPAmount(_ipToken, _baseToken, _gp);
-        uint256 swappedBase = NPSwap.swap(_ipToken, _baseToken, IPAmount);
+        uint256 swappedBase = safeSwap(_ipToken, _baseToken, IPAmount);
+
         amount = swappedBase > belongLP ? swappedBase.sub(belongLP) : 0;
         uint256 GPBase = _GPS.getGPBaseAmount(_ipToken, _baseToken, _gp);
         uint256 earnedGP = amount > GPBase ? amount.sub(GPBase) : 0;
@@ -37,6 +37,7 @@ contract GPWithdrawLogic is BaseLogic {
             amount = amount.sub(earnedGP.mul(20).div(100));
         }
 
+        amount = amount.add(_GPS.getGPRunningDepositAmount(_ipToken, _baseToken, _gp));
         if (amount > 0) {
             IERC20(_baseToken).safeTransfer(_gp, amount);
         }
@@ -74,13 +75,15 @@ contract GPWithdrawLogic is BaseLogic {
         uint256 totalBaseAmount =  _GPS.getLiquidationBaseAmount(_ipToken, _baseToken);
         uint256 totalBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
         uint256 balance = _GPS.getGPBaseBalance(_ipToken, _baseToken, _gp);
+        uint256 runningDepositAmount = _GPS.getGPRunningDepositAmount(_ipToken, _baseToken, _gp);
+        totalBaseAmount = totalBaseAmount.mul(balance).div(totalBalance).add(runningDepositAmount);
 
         if (totalIPAmount > 0) {
             IERC20(_ipToken).safeTransfer(_gp, totalIPAmount.mul(balance).div(totalBalance));
         }
 
         if (totalBaseAmount > 0) {
-            IERC20(_baseToken).safeTransfer(_gp, totalBaseAmount.mul(balance).div(totalBalance));
+            IERC20(_baseToken).safeTransfer(_gp, totalBaseAmount);
         }
 
         _GPS.deleteGP(_ipToken, _baseToken, _gp);

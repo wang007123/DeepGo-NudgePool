@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./lib/SafeMath.sol";
+import "./lib/Safety.sol";
 import "./lib/NPSwap.sol";
 import "./storage/IPStorage.sol";
 import "./storage/GPStorage.sol";
@@ -11,7 +11,7 @@ import "./storage/LPStorage.sol";
 import "./NudgePool.sol";
 
 contract NudgePoolStatus {
-    using SafeMath for uint256;
+    using Safety for uint256;
 
     // Keep consistent with Stages in BaseLogic.sol
     enum Stages {
@@ -374,6 +374,8 @@ contract NudgePoolStatus {
             if (block.timestamp >= time.add(_NP.raisingDuration())) {
                 return true;
             }
+        } else if (stage == uint8(Stages.ALLOCATING)) {
+            return true;
         } else if (stage == uint8(Stages.RUNNING)) {
             uint256 duration = _IPS.getIPDuration(_ipToken, _baseToken);
             if (block.timestamp >= time.add(duration)) {
@@ -459,9 +461,9 @@ contract NudgePoolStatus {
         external view 
         returns (uint256 ipAsset, uint256 baseAsset)
     {
-        require(_IPS.getPoolValid(_ipToken, _baseToken) == true, "NudgePool Not Exist");
+        require(_IPS.getPoolValid(_ipToken, _baseToken), "NudgePool Not Exist");
         
-        if (_LPS.getLPValid(_ipToken, _baseToken, _lp) == false) {
+        if (!_LPS.getLPValid(_ipToken, _baseToken, _lp)) {
             return (ipAsset, baseAsset);
         }
 
@@ -498,9 +500,9 @@ contract NudgePoolStatus {
         external view 
         returns (uint256 ipAsset, uint256 baseAsset)
     {
-        require(_IPS.getPoolValid(_ipToken, _baseToken) == true, "NudgePool Not Exist");
+        require(_IPS.getPoolValid(_ipToken, _baseToken), "NudgePool Not Exist");
         
-        if (_GPS.getGPValid(_ipToken, _baseToken, _gp) == false) {
+        if (!_GPS.getGPValid(_ipToken, _baseToken, _gp)) {
             return (ipAsset, baseAsset);
         }
         
