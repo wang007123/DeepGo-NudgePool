@@ -4,13 +4,16 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract GPDepositLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for uint256;
     using SafeERC20 for IERC20;
+
+    uint256 constant MAX_GP_NUMBER = 500;
+    uint256 constant NONZERO_INIT = 1;
 
     function GPDepositRaising(
         address _ipToken,
@@ -23,6 +26,7 @@ contract GPDepositLogic is BaseLogic {
         returns (uint256 amount)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RAISING);
+
         address _gp = msg.sender;
         uint256 oriGPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
 
@@ -40,6 +44,7 @@ contract GPDepositLogic is BaseLogic {
         }
 
         require(amount > 0, "Deposit Zero");
+        require(_GPS.getGPArrayLength(_ipToken, _baseToken) <= MAX_GP_NUMBER, "Too Many GP");
         return amount;
     }
 
@@ -71,6 +76,7 @@ contract GPDepositLogic is BaseLogic {
         }
 
         require(amount > 0, "Deposit Zero");
+        require(_GPS.getGPArrayLength(_ipToken, _baseToken) <= MAX_GP_NUMBER, "Too Many GP");
         return amount;
     }
 
@@ -78,7 +84,6 @@ contract GPDepositLogic is BaseLogic {
         address _ipToken,
         address _baseToken
     )
-    
         external
         lockPool(_ipToken, _baseToken)
     {
@@ -87,6 +92,7 @@ contract GPDepositLogic is BaseLogic {
         uint256 amount = _GPS.getGPRunningDepositAmount(_ipToken, _baseToken, _gp);
 
         require(amount > 0, "Already done");
+
         _GPS.setCurGPAmount(_ipToken, _baseToken,
                             _GPS.getCurGPAmount(_ipToken, _baseToken).add(amount));
         _GPS.setGPBaseAmount(_ipToken, _baseToken, _gp,
@@ -102,12 +108,11 @@ contract GPDepositLogic is BaseLogic {
         _GPS.setGPBaseBalance(_ipToken, _baseToken, _gp, oriBalance.add(_amount));
         oriBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
         _GPS.setCurGPBalance(_ipToken, _baseToken, oriBalance.add(_amount));
-        
-        uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
-                                           _amount.add(raiseLP));
+        uint256 swappedIP = safeSwap(_baseToken, _ipToken, _amount.add(raiseLP));
+
         oriBalance = _GPS.getCurIPAmount(_ipToken, _baseToken);
         _GPS.setCurIPAmount(_ipToken, _baseToken, oriBalance.add(swappedIP));
-        allocateFunds(_ipToken, _baseToken);
+        _GPS.allocateFunds(_ipToken, _baseToken);
     }
 
     function updateMaxIPCanRaise(
@@ -123,11 +128,11 @@ contract GPDepositLogic is BaseLogic {
         uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
         uint256 initPrice = _IPS.getPoolInitPrice(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
-        // part 1
-        uint256 amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(price.sqrt()).div(initPrice.sqrt()).mul(inUnit).div(initPrice);
+        // part1
+        uint256 amount = IPStake.mul(impawnRatio).mul(price.sqrt()).mul(inUnit).div(RATIO_FACTOR).div(initPrice.sqrt()).div(initPrice);
         maxAmount = amount;
         // part2
-        amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(alpha).div(RATIO_FACTOR).mul(inUnit).div(initPrice);
+        amount = IPStake.mul(impawnRatio).mul(alpha).mul(inUnit).div(RATIO_FACTOR).div(RATIO_FACTOR).div(initPrice);
         amount = amount.mul(price).div(initPrice);
         maxAmount = maxAmount.add(amount);
 
@@ -198,35 +203,6 @@ contract GPDepositLogic is BaseLogic {
             resBalance -= curBalance;
             curBalance = i == len - 1 ? curBalance.add(resBalance) : curBalance;
             _GPS.setGPBaseBalance(_ipToken, _baseToken, gp, curBalance);
-        }
-    }
-
-    function allocateFunds(
-        address _ipToken,
-        address _baseToken
-    )
-        private
-    {
-        uint256 len = _GPS.getGPArrayLength(_ipToken, _baseToken);
-        uint256 balance = _GPS.getCurGPBalance(_ipToken, _baseToken);
-        uint256 IPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
-        uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
-        uint256 resIPAmount = IPAmount;
-        uint256 resRaiseLP = raiseLP;
-
-        for (uint256 i = 0; i < len; i++) {
-            address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i);
-            uint256 gpBalance = _GPS.getGPBaseBalance(_ipToken, _baseToken, gp);
-
-            uint256 curAmount = gpBalance.mul(IPAmount).div(balance);
-            resIPAmount -= curAmount;
-            curAmount = i == len - 1 ? curAmount.add(resIPAmount) : curAmount;
-            _GPS.setGPHoldIPAmount(_ipToken, _baseToken, gp, curAmount);
-
-            curAmount = gpBalance.mul(raiseLP).div(balance);
-            resRaiseLP -= curAmount;
-            curAmount = i == len - 1 ? curAmount.add(resRaiseLP) : curAmount;
-            _GPS.setGPRaiseLPAmount(_ipToken, _baseToken, gp, curAmount);
         }
     }
 }

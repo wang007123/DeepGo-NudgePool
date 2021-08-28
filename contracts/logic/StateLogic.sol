@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract StateLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for *;
     using SafeERC20 for IERC20;
 
     struct GPAlloc {
@@ -46,6 +46,7 @@ contract StateLogic is BaseLogic {
         returns (bool)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RAISING);
+        require(!msg.sender.isContract(), "Not support contract");
 
         uint256 time = _IPS.getPoolAuctionEndTime(_ipToken, _baseToken);
         if (block.timestamp < time.add(raisingDuration)) {
@@ -78,7 +79,7 @@ contract StateLogic is BaseLogic {
         uint256 price = NPSwap.getAmountOut(_baseToken, _ipToken, inUnit);
         uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
-        uint256 initAmount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(inUnit).div(price);
+        uint256 initAmount = IPStake.mul(impawnRatio).mul(inUnit).div(RATIO_FACTOR).div(price);
 
         _IPS.setPoolInitPrice(_ipToken, _baseToken, price);
         _IPS.setIPInitCanRaise(_ipToken, _baseToken, initAmount);
@@ -98,10 +99,10 @@ contract StateLogic is BaseLogic {
         uint256 initPrice = _IPS.getPoolInitPrice(_ipToken, _baseToken);
         uint32 impawnRatio = _IPS.getIPImpawnRatio(_ipToken, _baseToken);
         // part 1
-        uint256 amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(price.sqrt()).div(initPrice.sqrt()).mul(inUnit).div(initPrice);
+        uint256 amount = IPStake.mul(impawnRatio).mul(price.sqrt()).mul(inUnit).div(RATIO_FACTOR).div(initPrice.sqrt()).div(initPrice);
         maxAmount = amount;
         // part2
-        amount = IPStake.mul(impawnRatio).div(RATIO_FACTOR).mul(alpha).div(RATIO_FACTOR).mul(inUnit).div(initPrice);
+        amount = IPStake.mul(impawnRatio).mul(alpha).mul(inUnit).div(RATIO_FACTOR).div(RATIO_FACTOR).div(initPrice);
         amount = amount.mul(price).div(initPrice);
         maxAmount = maxAmount.add(amount);
 
@@ -122,79 +123,93 @@ contract StateLogic is BaseLogic {
         uint32 closeLine = _IPS.getIPCloseLine(_ipToken, _baseToken);
         uint256 maxAmount = _IPS.getIPMaxCanRaise(_ipToken, _baseToken);
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
-        uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
-        maxAmount = maxAmount > GPAmount ? GPAmount : maxAmount;
-        if (IPAmount.mul(price).div(inUnit).mul(closeLine) <= maxAmount.mul(RATIO_FACTOR)) {
-            //Pently to IP
-            IERC20(_ipToken).safeTransfer(owner(), IPStake);
-            repayGPLP(_ipToken, _baseToken);
-        } else {
-            GPAmount = allocateGP(_ipToken, _baseToken);
-            // Transit to next stage when raised zero amount.
-            if (GPAmount == 0) {
-                poolTransitNextStage(_ipToken, _baseToken);
-                return;
-            }
 
-            uint256 fee = chargeVaultFee(_ipToken, _baseToken, GPAmount);
-            uint256 raiseLP = raiseFromLP(_ipToken, _baseToken, GPAmount.sub(fee));
-            uint256 swappedIP = NPSwap.swap(_baseToken, _ipToken,
-                                            GPAmount.add(raiseLP).sub(fee));
-            _GPS.setCurIPAmount(_ipToken, _baseToken, swappedIP);
-            allocateFunds(_ipToken, _baseToken);
+        maxAmount = maxAmount > GPAmount ? GPAmount : maxAmount;
+        if (IPAmount.mul(price).mul(closeLine).div(inUnit) <= maxAmount.mul(RATIO_FACTOR)) {
+            doRaisingLiquidation(_ipToken, _baseToken);
+        } else {
+            allocateGP(_ipToken, _baseToken);
             poolTransitNextStage(_ipToken, _baseToken);
         }
     }
 
-    function repayGPLP(
+    function allocateFundraising(
+        address _ipToken,
+        address _baseToken
+    )
+        external
+        lockPool(_ipToken, _baseToken)
+    {
+        poolAtStage(_ipToken, _baseToken, Stages.ALLOCATING);
+        uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
+        // Transit to next stage when raised zero amount.
+        if (GPAmount == 0) {
+            poolTransitNextStage(_ipToken, _baseToken);
+            return;
+        }
+        uint256 fee = chargeVaultFee(_ipToken, _baseToken, GPAmount);
+        uint256 raiseLP = raiseFromLP(_ipToken, _baseToken, GPAmount.sub(fee));
+        uint256 swappedIP = safeSwap(_baseToken, _ipToken,
+                                        GPAmount.add(raiseLP).sub(fee));
+        _GPS.setCurIPAmount(_ipToken, _baseToken, swappedIP);
+        _GPS.allocateFunds(_ipToken, _baseToken);
+        repayGPOverRaise(_ipToken, _baseToken);
+
+        poolTransitNextStage(_ipToken, _baseToken);
+    }
+
+    function repayGPOverRaise(
         address _ipToken,
         address _baseToken
     )
         private
     {
-        uint256 lenLP = _LPS.getLPArrayLength(_ipToken, _baseToken);
-        uint256 lenGP = _GPS.getGPArrayLength(_ipToken, _baseToken);
+        uint256 len = _GPS.getGPArrayLength(_ipToken, _baseToken);
 
-        for (uint256 i = lenLP; i > 0; i--) {
-            address lp = _LPS.getLPByIndex(_ipToken, _baseToken, i - 1);
-            uint256 amountLP = _LPS.getLPBaseAmount(_ipToken, _baseToken, lp);
-            IERC20(_baseToken).safeTransfer(lp, amountLP);
-            _LPS.deleteLP(_ipToken, _baseToken, lp);
+        for (uint i = len; i > 0; i--) {
+            address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i - 1);
+            uint256 repayAmount = _GPS.getOverRaisedAmount(_ipToken, _baseToken, gp);
+
+            if (repayAmount > 0) {
+                IERC20(_baseToken).safeTransfer(gp, repayAmount);
+            }
+            _GPS.setOverRaisedAmount(_ipToken, _baseToken, gp, 0);
         }
-
-        for (uint256 j = lenGP; j > 0; j--) {
-            address gp = _GPS.getGPByIndex(_ipToken, _baseToken, j - 1);
-            uint256 amountGP = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
-            IERC20(_baseToken).safeTransfer(gp, amountGP);
-            _GPS.deleteGP(_ipToken, _baseToken, gp);
-        }
-
-        // Reset Pool LP Info
-        _LPS.setCurLPAmount(_ipToken, _baseToken, 0);
-        // Reset Pool GP Info
-        _GPS.setCurGPAmount(_ipToken, _baseToken, 0);
-        _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, 0);
-        _GPS.setCurIPAmount(_ipToken, _baseToken, 0);
-        _GPS.setCurGPBalance(_ipToken, _baseToken, 0);
-        //Reset Pool Info
-        _IPS.setPoolStage(_ipToken, _baseToken, uint8(Stages.FINISHED));
-        _IPS.deletePool(_ipToken, _baseToken);
     }
 
+    function doRaisingLiquidation(
+        address _ipToken,
+        address _baseToken
+    )
+        private
+    {
+        // Penalty to IP, transfer stake token to owner
+        uint256 IPStake = _IPS.getIPTokensAmount(_ipToken, _baseToken);
+        IERC20(_ipToken).safeTransfer(owner(), IPStake);
+
+        // Repay all GP token back
+        uint256 totalGPAmount= _GPS.getCurGPAmount(_ipToken, _baseToken);
+        _GPS.setLiquidationBaseAmount(_ipToken, _baseToken, totalGPAmount);
+
+        // Repay all LP token back
+        uint256 totalLPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
+        _LPS.setLiquidationBaseAmount(_ipToken, _baseToken, totalLPAmount);
+
+        // Transit pool to LIQUIDATION stage
+        _IPS.setPoolStage(_ipToken, _baseToken, uint8(Stages.LIQUIDATION));
+    }
 
     function allocateGP(
         address _ipToken,
         address _baseToken
     )
         private
-        returns (uint256 amount)
     {
         uint256 GPAmount = _GPS.getCurGPAmount(_ipToken, _baseToken);
         uint256 maxAmount = updateMaxIPCanRaise(_ipToken, _baseToken);
 
         if (GPAmount <= maxAmount) {
-            amount = GPAmount;
-            return amount;
+            return;
         }
 
         uint256 totalWeight = 0;
@@ -202,7 +217,7 @@ contract StateLogic is BaseLogic {
         GPAlloc[] memory helpArr = new GPAlloc[](len);
         for (uint256 i = 0; i < len; i++) {
             address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i);
-            amount = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
+            uint256 amount = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
             helpArr[i].gp = gp;
             helpArr[i].weight = IERC20(DGTToken).balanceOf(gp).add(1 ether).mul(amount.sqrt());
             totalWeight = totalWeight.add(helpArr[i].weight);
@@ -225,14 +240,12 @@ contract StateLogic is BaseLogic {
         for (uint256 i = 0; i < len; i++) {
             address gp = helpArr[i].gp;
             uint256 expectAmount = resAmount.mul(helpArr[i].weight).div(totalWeight);
-            amount = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
+            uint256 amount = _GPS.getGPBaseAmount(_ipToken, _baseToken, gp);
             expectAmount = expectAmount > amount ? amount : expectAmount;
             if (expectAmount < amount) {
-                uint256 retAmount = amount.sub(expectAmount);
-                IERC20(_baseToken).safeTransfer(gp, retAmount);
-                _GPS.setGPBaseAmount(_ipToken, _baseToken, gp, expectAmount);
-                _GPS.setGPBaseBalance(_ipToken, _baseToken, gp, expectAmount);
-                GPAmount = GPAmount.sub(retAmount);
+                uint256 overRaisedAmount = amount.sub(expectAmount);
+                _GPS.setGPAmount(_ipToken, _baseToken, gp, expectAmount, expectAmount, overRaisedAmount);
+                GPAmount = GPAmount.sub(overRaisedAmount);
             }
             resAmount = resAmount.sub(expectAmount);
             totalWeight = totalWeight.sub(helpArr[i].weight);
@@ -240,8 +253,6 @@ contract StateLogic is BaseLogic {
 
         _GPS.setCurGPAmount(_ipToken, _baseToken, GPAmount);
         _GPS.setCurGPBalance(_ipToken, _baseToken, GPAmount);
-        amount = GPAmount;
-        return amount;
     }
 
     function chargeVaultFee(
@@ -276,33 +287,5 @@ contract StateLogic is BaseLogic {
         amount = amount > curLPAmount ? curLPAmount : amount;
         _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, amount);
         return amount;
-    }
-
-    function allocateFunds(
-        address _ipToken,
-        address _baseToken
-    )
-        private
-    {
-        uint256 len = _GPS.getGPArrayLength(_ipToken, _baseToken);
-        uint256 balance = _GPS.getCurGPBalance(_ipToken, _baseToken);
-        uint256 IPAmount = _GPS.getCurIPAmount(_ipToken, _baseToken);
-        uint256 raiseLP = _GPS.getCurRaiseLPAmount(_ipToken, _baseToken);
-        uint256 resIPAmount = IPAmount;
-        uint256 resRaiseLP = raiseLP;
-
-        for (uint256 i = 0; i < len; i++) {
-            address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i);
-            uint256 gpBalance = _GPS.getGPBaseBalance(_ipToken, _baseToken, gp);
-            uint256 curAmount = gpBalance.mul(IPAmount).div(balance);
-            resIPAmount -= curAmount;
-            curAmount = i == len - 1 ? curAmount.add(resIPAmount) : curAmount;
-            _GPS.setGPHoldIPAmount(_ipToken, _baseToken, gp, curAmount);
-
-            curAmount = gpBalance.mul(raiseLP).div(balance);
-            resRaiseLP -= curAmount;
-            curAmount = i == len - 1 ? curAmount.add(resRaiseLP) : curAmount;
-            _GPS.setGPRaiseLPAmount(_ipToken, _baseToken, gp, curAmount);
-        }
     }
 }

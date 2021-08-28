@@ -2,20 +2,20 @@
 
 pragma solidity ^0.8.0;
 
-import "../lib/Ownable.sol";
+import "../lib/Authority.sol";
 import "./IPStorage.sol";
 import "./GPStorage.sol";
 import "./VaultStorage.sol";
 import "./LPStorage.sol";
 
-contract NPStorage is Ownable {
+contract NPStorage is Authority {
     uint256 constant RATIO_FACTOR = 1000000;
 
     uint32 public minRatio = uint32(RATIO_FACTOR * 5 / 10000);
     uint32 public alpha = 0;
     uint32 public raiseRatio = uint32(RATIO_FACTOR * 1);
     // Lowest swap boundary
-    uint32 public raiseLPLossRatio = 800000;
+    uint32 public swapBoundaryRatio = 800000;
 
     uint256 public auctionDuration = 7 days;
     uint256 public raisingDuration = 3 days;
@@ -32,6 +32,7 @@ contract NPStorage is Ownable {
     event SetMinRatio(uint32 _MinRatio);
     event SetAlpha(uint32 _Alpha);
     event SetRaiseRatio(uint32 _RaiseRatio);
+    event SetSwapBoundaryRatio(uint32 _swapBoundaryRatio);
     event SetDuration(uint256 _AuctionDuration, uint256 _RaisingDuration, uint256 _MinimumDuration);
 
     function setMinRatio(uint32 _minRatio) external onlyOwner {
@@ -47,6 +48,11 @@ contract NPStorage is Ownable {
     function setRaiseRatio(uint32 _raiseRatio) external onlyOwner {
         raiseRatio = _raiseRatio;
         emit SetRaiseRatio(raiseRatio);
+    }
+
+    function setSwapBoundaryRatio(uint32 _swapBoundaryRatio) external onlyOwner {
+        swapBoundaryRatio = _swapBoundaryRatio;
+        emit SetSwapBoundaryRatio(swapBoundaryRatio);
     }
 
     function setDuration(uint256 _auction, uint256 _raising, uint256 _duration) external onlyOwner {

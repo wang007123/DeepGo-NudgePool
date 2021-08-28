@@ -1,6 +1,7 @@
 module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
     const { deploy } = deployments
     const { deployer } = await getNamedAccounts()
+    const npswap = await ethers.getContract("NPSwap")
 
     const ipstorage = await ethers.getContract("IPStorage")
     const gpstorage = await ethers.getContract("GPStorage")
@@ -12,13 +13,16 @@ module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
 
     const chainId = await getChainId()
     if (chainId === '1') {
+        // mainnet
         DGT = "0xc8eec1277b84fc8a79364d0add8c256b795c6727"
 
     } else if (chainId === '3') {
+        // ropsten
         DGT = "0x689a4FBAD3c022270caBD1dbE2C7e482474a70bc"
         DGTBenifit = deployer
-
+    
     } else if (chainId === '4') {
+        // rinkeby
         DGT = "0xB6d7Bf947d4D6321FD863ACcD2C71f022BCFd0eE"
         DGTBenifit = deployer
     }
@@ -33,6 +37,7 @@ module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
 
     await deploy("NudgePoolStatus", {
         from: deployer,
+        libraries: {"NPSwap": npswap.address},
         args: [ipstorage.address, gpstorage.address, lpstorage.address, vaultstorage.address, nudgepool.address],
         log: true,
         deterministicDeployment: false
@@ -61,4 +66,4 @@ module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
 }
 
 module.exports.tags = ["NudgePool"]
-module.exports.dependencies = ["Storage", "Logic"]
+module.exports.dependencies = ["Storage", "Logic", "NPSwap"]

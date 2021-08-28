@@ -3,12 +3,12 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "../lib/NPSwap.sol";
 import "./BaseLogic.sol";
 
 contract IPLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for *;
     using SafeERC20 for IERC20;
 
     function createPool(
@@ -25,7 +25,7 @@ contract IPLogic is BaseLogic {
         external
         poolNotExist(_ipToken, _baseToken)
     {
-        require(isContract(NPSwap.pairFor(_ipToken, _baseToken)), "No liquidity");
+        require(NPSwap.pairFor(_ipToken, _baseToken).isContract(), "No liquidity");
         qualifiedIP(_ip, _ipToken, _baseToken, _ipTokensAmount, _dgtTokensAmount, true);
         checkIPParams(_ipImpawnRatio, _ipCloseLine, _chargeRatio, _duration);
 
@@ -45,19 +45,6 @@ contract IPLogic is BaseLogic {
         _IPS.setIPDuration(_ipToken, _baseToken, _duration);
 
         poolTransitNextStage(_ipToken, _baseToken);
-    }
-
-    function isContract(address account) internal view returns (bool) {
-        // This method relies in extcodesize, which returns 0 for contracts in
-        // construction, since the code is only stored at the end of the
-        // constructor execution.
-
-        uint256 size;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            size := extcodesize(account)
-        }
-        return size > 0;
     }
 
     function auctionPool(
@@ -132,6 +119,21 @@ contract IPLogic is BaseLogic {
         return amount;
     }
 
+    function destroyPool(
+        address _ipToken,
+        address _baseToken
+    )
+        external
+        lockPool(_ipToken, _baseToken)
+    {
+        poolAtStage(_ipToken, _baseToken, Stages.LIQUIDATION);
+
+        clearGP(_ipToken, _baseToken);
+        clearLP(_ipToken, _baseToken);
+        clearVault(_ipToken, _baseToken);
+        clearIP(_ipToken, _baseToken);
+    }
+
     function qualifiedIP(
         address ip,
         address ipToken,
@@ -178,5 +180,98 @@ contract IPLogic is BaseLogic {
         require(RATIO_FACTOR > _chargeRatio && _chargeRatio > 0,
                 "invalid chargeRatio");
         require(_duration >= minimumDuration, "invalid duration");
+    }
+
+    function clearGP(
+        address _ipToken,
+        address _baseToken
+    )
+        private
+    {
+        uint256 len = _GPS.getGPArrayLength(_ipToken, _baseToken);
+        uint256 totalIPAmount = _GPS.getLiquidationIPAmount(_ipToken, _baseToken);
+        uint256 totalBaseAmount =  _GPS.getLiquidationBaseAmount(_ipToken, _baseToken);
+        uint256 totalBalance = _GPS.getCurGPBalance(_ipToken, _baseToken);
+
+        for (uint256 i = len; i > 0; i--) {
+            address gp = _GPS.getGPByIndex(_ipToken, _baseToken, i - 1);
+            uint256 balance = _GPS.getGPBaseBalance(_ipToken, _baseToken, gp);
+
+            if (totalIPAmount > 0) {
+                IERC20(_ipToken).safeTransfer(gp, totalIPAmount.mul(balance).div(totalBalance));
+            }
+
+            if (totalBaseAmount > 0) {
+                IERC20(_baseToken).safeTransfer(gp, totalBaseAmount.mul(balance).div(totalBalance));
+            }
+
+            _GPS.deleteGP(_ipToken, _baseToken, gp);
+        }
+
+        // Reset Pool GP Info
+        _GPS.setCurGPAmount(_ipToken, _baseToken, 0);
+        _GPS.setCurRaiseLPAmount(_ipToken, _baseToken, 0);
+        _GPS.setCurIPAmount(_ipToken, _baseToken, 0);
+        _GPS.setCurGPBalance(_ipToken, _baseToken, 0);
+        _GPS.setLiquidationIPAmount(_ipToken, _baseToken, 0);
+        _GPS.setLiquidationBaseAmount(_ipToken, _baseToken, 0);
+    }
+
+    function clearLP(
+        address _ipToken,
+        address _baseToken
+    )
+        private
+    {
+        uint256 len = _LPS.getLPArrayLength(_ipToken, _baseToken);
+        uint256 totalIPAmount = _LPS.getLiquidationIPAmount(_ipToken, _baseToken);
+        uint256 totalBaseAmount =  _LPS.getLiquidationBaseAmount(_ipToken, _baseToken);
+        uint256 totalLPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
+
+        for (uint256 i = len; i > 0; i--) {
+            address lp = _LPS.getLPByIndex(_ipToken, _baseToken, i - 1);
+            uint256 LPAmount = _LPS.getLPBaseAmount(_ipToken, _baseToken, lp);
+            uint256 reward = _LPS.getLPVaultReward(_ipToken, _baseToken, lp);
+
+            if (totalIPAmount > 0) {
+                IERC20(_ipToken).safeTransfer(lp, totalIPAmount.mul(LPAmount).div(totalLPAmount));
+            }
+
+            if (totalBaseAmount > 0) {
+                reward = reward.add(totalBaseAmount.mul(LPAmount).div(totalLPAmount));
+            }
+
+            IERC20(_baseToken).safeTransfer(lp, reward);
+            _LPS.deleteLP(_ipToken, _baseToken, lp);
+        }
+
+        // Reset Pool LP Info
+        _LPS.setCurLPAmount(_ipToken, _baseToken, 0);
+        _LPS.setLiquidationIPAmount(_ipToken, _baseToken, 0);
+        _LPS.setLiquidationBaseAmount(_ipToken, _baseToken, 0);
+    }
+
+    function clearVault(
+        address _ipToken,
+        address _baseToken
+    )
+        private
+    {
+        // Reset Pool Vault Info
+        _VTS.setTotalVault(_ipToken, _baseToken, 0);
+        _VTS.setIPWithdrawed(_ipToken, _baseToken, 0);
+        _VTS.setCurVault(_ipToken, _baseToken, 0);
+        _VTS.setLastUpdateTime(_ipToken, _baseToken, 0);
+    }
+
+    function clearIP(
+        address _ipToken,
+        address _baseToken
+    )
+        private
+    {
+        // Reset Pool Info
+        _IPS.setPoolStage(_ipToken, _baseToken, uint8(Stages.FINISHED));
+        _IPS.deletePool(_ipToken, _baseToken);
     }
 }

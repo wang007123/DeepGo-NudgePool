@@ -3,11 +3,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../lib/SafeMath.sol";
+import "../lib/Safety.sol";
 import "./BaseLogic.sol";
 
 contract VaultLogic is BaseLogic {
-    using SafeMath for uint256;
+    using Safety for uint256;
     using SafeERC20 for IERC20;
 
     function computeVaultReward(
@@ -18,22 +18,8 @@ contract VaultLogic is BaseLogic {
         lockPool(_ipToken, _baseToken)
     {
         poolAtStage(_ipToken, _baseToken, Stages.RUNNING);
-        uint256 vault = getVaultReward(_ipToken, _baseToken);
-        uint256 len = _LPS.getLPArrayLength(_ipToken, _baseToken);
-        uint256 LPAmount = _LPS.getCurLPAmount(_ipToken, _baseToken);
-        uint256 resVault = vault;
-
-        for (uint256 i = 0; i < len; i++) {
-            address lp = _LPS.getLPByIndex(_ipToken, _baseToken, i);
-            uint256 reward = _LPS.getLPVaultReward(_ipToken, _baseToken, lp);
-            uint256 amount = _LPS.getLPBaseAmount(_ipToken, _baseToken, lp);
-            //reuse local varible
-            uint256 curVault = vault.mul(amount).div(LPAmount);
-            resVault -= curVault;
-            curVault = i == len - 1 ? curVault.add(resVault) : curVault;
-            reward = reward.add(curVault);
-            _LPS.setLPVaultReward(_ipToken, _baseToken, lp, reward);
-        }
+        _LPS.divideVault(_ipToken, _baseToken,
+                         getVaultReward(_ipToken, _baseToken));
     }
 
     function getVaultReward(
