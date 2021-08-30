@@ -66,7 +66,7 @@ contract LiquidationLogic is BaseLogic {
         // Only do GP liquidation when IP did not reach the closeline
         if (IPAmount.mul(price).mul(closeLine).div(inUnit) <= GPAmount.mul(RATIO_FACTOR)) {
             return false;
-        } else if (curIPAmount.mul(price).div(inUnit) <= raiseLP) {
+        } else if (curIPAmount.mul(price).div(inUnit) < raiseLP) {
             doGPLiquidation(_ipToken, _baseToken);
             return true;
         }
