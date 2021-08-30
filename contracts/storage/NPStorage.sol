@@ -51,6 +51,7 @@ contract NPStorage is Authority {
     }
 
     function setSwapBoundaryRatio(uint32 _swapBoundaryRatio) external onlyOwner {
+        require(_swapBoundaryRatio >= 800000, "Low Swap Ratio");
         swapBoundaryRatio = _swapBoundaryRatio;
         emit SetSwapBoundaryRatio(swapBoundaryRatio);
     }
