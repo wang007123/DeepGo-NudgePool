@@ -1,3 +1,6 @@
+##This is a fork from my Previous work project.  I was coding using the name of KoNit-DeepGo.
+
+
 # DeepGo-NudgePool
 DeepGo NudgePool smart contracts
 
