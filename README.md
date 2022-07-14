@@ -1,4 +1,4 @@
-#This is a fork from my Previous work project.  I was coding using the name of KoNit-DeepGo.
+## This is a fork of my previous working project. I'm one of the programmers using the name KoNit-DeepGo.
 
 
 # DeepGo-NudgePool
